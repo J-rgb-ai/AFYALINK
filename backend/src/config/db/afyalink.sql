@@ -166,6 +166,7 @@ gender ENUM('Male','Female','Bi-sexual','Lesbian','Homosexual','They/Them and ot
 dob DATE NOT NULL,
 age INT  AS(TIMESTAMPDIFF(YEAR,dob,CURDATE())) STORED,
 photo LONGBLOB, 
+is_verified BOOLEAN DEFAULT FALSE,
 facility_id INT,
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
