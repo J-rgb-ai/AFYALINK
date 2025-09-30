@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+<<<<<<< HEAD
 
 import React from "react";
 import { Link } from "react-router-dom";
@@ -113,6 +114,10 @@ function LandingPage() {
   );
 }
 
+=======
+import ForgotPassword from "./pages/ForgotPassword";
+import LandingPage from "./pages/LandingPage";
+>>>>>>> ac1f904e5041b17bb0d0cba0d4951966d63a69b3
 function App() {
   return (
     <Router>
@@ -120,9 +125,15 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+<<<<<<< HEAD
+=======
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/landingpage" element={<LandingPage/>} />
+>>>>>>> ac1f904e5041b17bb0d0cba0d4951966d63a69b3
       </Routes>
     </Router>
   );
 }
 
 export default App;
+
