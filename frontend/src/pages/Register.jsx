@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 
-function RegistrationForm() {
+function Register() {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    phoneNumber: '',
+    idNumber: '',
     password: '',
-    confirmPassword: ''
+    role: ''
   });
+  const [registerError, setRegisterError] = useState('');
+  const [registerSuccess, setRegisterSuccess] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -69,8 +73,7 @@ function RegistrationForm() {
             required
           />
         </div>
-        <button type="submit">Register</button>
-      </form>
+      </div>
     </div>
   );
 }

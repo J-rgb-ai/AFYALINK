@@ -13,7 +13,7 @@ function LoginForm() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleRegister = (e) => {
     e.preventDefault();
     // Add login logic here
     alert('Login submitted!');
@@ -51,4 +51,4 @@ function LoginForm() {
   );
 }
 
-export default LoginForm;
+export default LoginRegister;
