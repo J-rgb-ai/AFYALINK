@@ -112,7 +112,7 @@ const ismage = async(buffer) =>{
 
 
 
-const upload = multer({
+const upload => multer({
   storage: multer.memoryStorage(),
   photofilter,
   limits: {fileSize: 15 * 1024 * 1024}
@@ -283,7 +283,7 @@ exports.userLogin = async (req,res) =>{
     if(rows.length === 0){
       return res.status(301).json({error:'user not found'});
     }
- const match = bc.compare(password,user.password_hash);
+ const match = await bc.compare(password,user.password_hash);
  if(!match) return res.status(301).json({error:'invalid credentials'});
 
 
@@ -312,7 +312,7 @@ exports.userLogin = async (req,res) =>{
 
 exports.loginVerify = async (req,res) =>{
 
-  const ah = req.headers.Authorization;
+  const ah = req.headers['authorization'];
   if(!ah?.startsWith('Bearer ')) return res.status(500).json(erroe:'Missing or invalid token');
 
   const token = ah.split('')[1];
