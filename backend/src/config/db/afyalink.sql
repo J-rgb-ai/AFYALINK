@@ -168,7 +168,7 @@ age INT  AS(TIMESTAMPDIFF(YEAR,dob,CURDATE())) STORED,
 photo LONGBLOB, 
 is_verified BOOLEAN DEFAULT FALSE,
 facility_id INT,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 FOREIGN KEY (facility_id) REFERENCES facilities(id)
 
@@ -293,7 +293,7 @@ CREATE TABLE surgeons(
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (doctor_id) REFERENCES doctors(id),
     -- no need for this like italeta tu issue FOREIGN KEY (license_number) REFERENCES doctors(license_number),
-    FOREIGN KEY (operating_facility_id) REFERENCES facilites(id)
+    FOREIGN KEY (operating_facility_id) REFERENCES facilities(id)
 
 
 );
@@ -661,7 +661,7 @@ BEGIN
   END IF;
 
   IF change_summary != '' THEN
-    INSERT INTO audit_log (user_id, action, target_table, target_id, description, timestamp)
+    INSERT INTO audit_log (user_id, action, target_table, target_id, description, time_stamp)
     VALUES (
       @current_user_id,
       'update',
