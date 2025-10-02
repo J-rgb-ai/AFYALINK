@@ -1,5 +1,5 @@
 
-CREATE DATABASE afyalink1;
+--CREATE DATABASE afyalink1;
 
 USE afyalink1;
 
