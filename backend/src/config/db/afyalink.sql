@@ -166,6 +166,8 @@ gender ENUM('Male','Female','Bi-sexual','Lesbian','Homosexual','They/Them and ot
 dob DATE NOT NULL,
 age INT  AS(TIMESTAMPDIFF(YEAR,dob,CURDATE())) STORED,
 photo LONGBLOB, 
+user_stats ENUM("ACTIVE","SUSPENDED","PENDING") DEEFAULT "PENDING",
+active_at TIMESTAMP DEEFAULT NULL,
 is_verified BOOLEAN DEFAULT FALSE,
 facility_id INT,
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
@@ -176,6 +178,21 @@ FOREIGN KEY (facility_id) REFERENCES facilities(id)
 
 );
 
+
+--TRIGGER ACTIVE
+DELIMITER //
+    CREATE TRIGGER user active
+    AFTER UPDATE ON users
+    BEGIN
+    IF NEW.user_stats= "ACTIVE" and OLD.user_stats="ACTIVE"
+        SET active_at= TIMESTAMP DEFFAULT CURRENT TIMESTAMP;
+     END IF;
+
+     END;
+
+//
+    
+DELIMITER
 
 --also depratment table a late arrival could loose significance though
 
