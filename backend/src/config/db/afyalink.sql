@@ -1,7 +1,7 @@
 
-CREATE DATABASE afyalink;
+CREATE DATABASE afyalink1;
 
-USE afyalink;
+USE afyalink1;
 
 --user creaation
 
