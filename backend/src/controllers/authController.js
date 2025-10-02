@@ -357,4 +357,29 @@ exports.loginVerify = async (req,res) =>{
 
 
 
+// /admin/login
+
+
+
+exports.adminLogin = async (req,res) => {
+
+try {
+
+const {phone,email,password} = req.body;
+
+
+}
+
+catch(err)
+
+{}
+
+
+
+
+
+};
+
+
+
 
