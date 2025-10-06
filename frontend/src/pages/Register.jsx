@@ -3,53 +3,72 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const styles = {
   root: {
-    maxWidth: '400px',
-    margin: '40px auto',
-    padding: '20px',
-    fontFamily: 'Inter, system-ui, Segoe UI, Roboto, Arial',
-    color: '#0f1720',
+    height: '100vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundImage: "url('https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1470&q=80')",
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    borderRadius: '12px',
-    boxShadow: '0 6px 18px rgba(12,20,30,0.1)',
   },
-  form: {
-    background: 'rgba(255, 255, 255, 0.9)',
-    padding: '20px',
+  formContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: '40px',
     borderRadius: '12px',
+    width: '360px',
+    color: '#fff',
+    boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+    fontFamily: 'Inter, system-ui, Segoe UI, Roboto, Arial',
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    textAlign: 'center',
   },
   input: {
     width: '100%',
-    padding: '10px',
-    marginBottom: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
+    padding: '12px',
+    marginBottom: '15px',
+    borderRadius: '6px',
+    border: 'none',
+    fontSize: '14px',
   },
   select: {
     width: '100%',
-    padding: '10px',
-    marginBottom: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    backgroundColor: '#fff',
+    padding: '12px',
+    marginBottom: '15px',
+    borderRadius: '6px',
+    border: 'none',
+    fontSize: '14px',
   },
   button: {
     width: '100%',
-    padding: '10px',
-    borderRadius: '8px',
+    padding: '12px',
+    borderRadius: '6px',
     border: 'none',
-    backgroundColor: '#0066cc',
+    backgroundColor: '#2563eb',
     color: '#fff',
+    fontWeight: 'bold',
     cursor: 'pointer',
+    fontSize: '16px',
+  },
+  linkContainer: {
+    marginTop: '15px',
+    textAlign: 'center',
+    fontSize: '14px',
+    color: '#ccc',
   },
   link: {
-    display: 'block',
+    color: '#3b82f6',
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    marginLeft: '5px',
+  },
+  error: {
+    color: '#f87171',
     marginTop: '10px',
     textAlign: 'center',
-    color: '#0066cc',
-    cursor: 'pointer',
-    textDecoration: 'underline',
   },
 };
 
@@ -64,6 +83,7 @@ function Register() {
     role: ''
   });
 
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -75,14 +95,19 @@ function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    setError('');
     alert(`Registration submitted for role: ${formData.role}`);
     navigate('/login');
   };
 
   return (
     <div style={styles.root}>
-      <form style={styles.form} onSubmit={handleSubmit}>
-        <h2>Register</h2>
+      <form style={styles.formContainer} onSubmit={handleSubmit}>
+        <div style={styles.title}>AFYALINK</div>
         <input
           type="text"
           id="username"
@@ -156,7 +181,11 @@ function Register() {
           style={styles.input}
         />
         <button type="submit" style={styles.button}>Register</button>
-        <Link to="/login" style={styles.link}>Already have an account? Login here</Link>
+        {error && <p style={styles.error}>{error}</p>}
+        <div style={styles.linkContainer}>
+          Already have an account?
+          <Link to="/login" style={styles.link}>Login here</Link>
+        </div>
       </form>
     </div>
   );

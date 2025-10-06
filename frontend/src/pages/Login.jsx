@@ -3,49 +3,68 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const styles = {
   root: {
-    maxWidth: '400px',
-    margin: '40px auto',
-    padding: '20px',
-    fontFamily: 'Inter, system-ui, Segoe UI, Roboto, Arial',
-    color: '#0f1720',
-    backgroundImage: "url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=400&q=80')",
-    backgroundSize: 'contain',
-    backgroundRepeat: 'no-repeat',
+    height: '100vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundImage: "url('https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1470&q=80')",
+    backgroundSize: 'cover',
     backgroundPosition: 'center',
-    borderRadius: '12px',
-    boxShadow: '0 6px 18px rgba(12,20,30,0.1)',
   },
-  form: {
-    background: 'rgba(255, 255, 255, 0.9)',
-    padding: '20px',
+  formContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: '40px',
     borderRadius: '12px',
+    width: '360px',
+    color: '#fff',
+    boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+    fontFamily: 'Inter, system-ui, Segoe UI, Roboto, Arial',
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: '14px',
+    marginBottom: '20px',
+    textAlign: 'center',
+    color: '#ccc',
   },
   input: {
     width: '100%',
-    padding: '10px',
-    marginBottom: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
+    padding: '12px',
+    marginBottom: '15px',
+    borderRadius: '6px',
+    border: 'none',
+    fontSize: '14px',
   },
   button: {
     width: '100%',
-    padding: '10px',
-    borderRadius: '8px',
+    padding: '12px',
+    borderRadius: '6px',
     border: 'none',
-    backgroundColor: '#0066cc',
+    backgroundColor: '#2563eb',
     color: '#fff',
+    fontWeight: 'bold',
     cursor: 'pointer',
+    fontSize: '16px',
+  },
+  linkContainer: {
+    marginTop: '15px',
+    textAlign: 'center',
+    fontSize: '14px',
+    color: '#ccc',
   },
   link: {
-    display: 'block',
-    marginTop: '10px',
-    textAlign: 'center',
-    color: '#0066cc',
-    cursor: 'pointer',
+    color: '#3b82f6',
     textDecoration: 'underline',
+    cursor: 'pointer',
+    marginLeft: '5px',
   },
   error: {
-    color: 'red',
+    color: '#f87171',
     marginTop: '10px',
     textAlign: 'center',
   },
@@ -53,9 +72,8 @@ const styles = {
 
 function LoginForm() {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
-    role: '',
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -70,7 +88,8 @@ function LoginForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // For now, restrict login to users with role 'Doctor' only
-    if (formData.role === 'Doctor') {
+    // Since role is not selected here, assume email check or other logic
+    if (formData.email.endsWith('@doctor.com')) {
       setError('');
       alert('Login successful!');
       navigate('/doctor-dashboard');
@@ -81,14 +100,15 @@ function LoginForm() {
 
   return (
     <div style={styles.root}>
-      <form style={styles.form} onSubmit={handleSubmit}>
-        <h2>Login</h2>
+      <form style={styles.formContainer} onSubmit={handleSubmit}>
+        <div style={styles.title}>AFYALINK</div>
+        <div style={styles.subtitle}>Sign in to access your dashboard</div>
         <input
-          type="text"
-          id="username"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Enter your email"
+          value={formData.email}
           onChange={handleChange}
           required
           style={styles.input}
@@ -97,29 +117,19 @@ function LoginForm() {
           type="password"
           id="password"
           name="password"
-          placeholder="Password"
+          placeholder="Enter your password"
           value={formData.password}
           onChange={handleChange}
           required
           style={styles.input}
         />
-        <select
-          id="role"
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        >
-          <option value="" disabled>Select Role</option>
-          <option value="Doctor">Doctor</option>
-          <option value="Nurse">Nurse</option>
-          <option value="Lab Tec">Lab Tec</option>
-          <option value="Patient">Patient</option>
-        </select>
         <button type="submit" style={styles.button}>Login</button>
         {error && <p style={styles.error}>{error}</p>}
-        <Link to="/register" style={styles.link}>Don't have an account? Register here</Link>
+        <div style={styles.linkContainer}>
+          Don't have an account?
+          <Link to="/register" style={styles.link}>Register here</Link> |
+          <Link to="/forgot-password" style={styles.link}>Forgot Password?</Link>
+        </div>
       </form>
     </div>
   );
