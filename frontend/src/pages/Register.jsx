@@ -7,9 +7,12 @@ function Register() {
     phoneNumber: '',
     idNumber: '',
     password: '',
+    confirmPassword: '',
     role: ''
   });
+  // eslint-disable-next-line no-unused-vars
   const [registerError, setRegisterError] = useState('');
+  // eslint-disable-next-line no-unused-vars
   const [registerSuccess, setRegisterSuccess] = useState('');
 
   const handleChange = (e) => {
@@ -73,9 +76,11 @@ function Register() {
             required
           />
         </div>
-      </div>
+        {/* Add other fields as needed */}
+        <button type="submit">Register</button>
+      </form>
     </div>
   );
 }
 
-export default RegistrationForm;
+export default Register;
