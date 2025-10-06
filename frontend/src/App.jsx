@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaUserMd, FaHospital, FaHeartbeat, FaLock, FaBolt, FaBrain, FaMobileAlt, FaChartBar, FaCheckCircle, FaStar, FaPhoneAlt, FaEnvelope, FaFacebook, FaTwitter, FaLinkedin } from "react-icons";
+import { FaUserMd, FaHospital, FaHeartbeat, FaLock, FaBrain, FaMobileAlt, FaChartBar, FaCheckCircle, FaStar, FaPhoneAlt, FaEnvelope, FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";

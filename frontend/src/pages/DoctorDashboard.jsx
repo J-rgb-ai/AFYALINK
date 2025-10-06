@@ -7,10 +7,7 @@ const styles = {
     padding: '18px',
     fontFamily: 'Inter, system-ui, Segoe UI, Roboto, Arial',
     color: '#0f1720',
-    backgroundImage: "url('https://thumbs.dreamstime.com/z/female-surgeon-operating-assistants-surgeons-work-blue-filter-modern-medicine-professional-doctors-female-surgeon-180933368.jpg')",
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
+    background: '#f0f0f0',
     minHeight: '100vh',
   },
   header: {
