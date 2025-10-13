@@ -1,4 +1,4 @@
-const express = require("express");
+/*const express = require("express");
 const router = express.Router();
 const { landingPage } = require("../controllers/indexController");
 
@@ -8,3 +8,5 @@ router.get("/health", (req, res) => {
 });
 
 module.exports = router;
+*/
+

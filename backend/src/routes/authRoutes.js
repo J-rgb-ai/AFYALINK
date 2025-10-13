@@ -1,8 +1,28 @@
-const express = require("express");
-const router = express.Router();
-const { signup, login } = require("../controllers/authController");
+/*const ex = require('express');
+const r = ex.Router();
+const signup = require("../controllers/authController");
 
-router.post("/signup", signup);
-router.post("/login", login);
 
-module.exports = router;
+
+r.post("/signup",express.json(), signup);
+//router.post("/login", login);
+
+
+module.exports = r;
+*/
+
+
+import express from 'express';
+import { signup,login } from '../controllers/authController.js';
+
+
+const userrouter = express.Router();
+
+userrouter.post('/signup',signup);
+userrouter.post('/signin',login);
+
+
+
+export default userrouter;
+
+
