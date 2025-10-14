@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
-const gentok = (userID,role) =>{
-    return jwt.sign({id:userID, role},process.env.JWT,{expiresIn: '1h'});
+const gentok = (id,email,phone,role) =>{
+    return jwt.sign({id,email,phone, role},process.env.JWT,{expiresIn: '1h'});
 };
 
 export default gentok;

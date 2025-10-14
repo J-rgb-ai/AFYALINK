@@ -83,7 +83,9 @@ import User from '../config/db/orm/ormmodels/user.js';
 import gentok from '../utils/jwt/genjwt.js';
 import Facility from '../config/db/orm/ormmodels/facility.js';
 import vertok from '../utils/jwt/verjwt.js';
-
+import genotp from '../utils/otp/genotp.js';
+import verotp from '../utils/otp/verotp.js';
+import { Fn } from 'sequelize/lib/utils';
 
 
 
@@ -346,7 +348,130 @@ export const userbyid = async(req,res) =>{
 
 
 
+};
+
+
+//user/forgotpass
+
+
+export const forgotpass = async (req,res) =>{
+
+
+try{
+  if(!req.body) return res.status(400).json({error: 'Missing reques body'});
+
+  const {email,phone} = req.body;
+  if(!email && !phone) return res.status(401).json({error: 'Missing email or phone'});
+
+  const user = await User.findOne({where: {...(email && {email}), ...(phone && {phone})}});
+
+  if(!user) return res.status(404).json({error: 'No user with such details..'});
+
+  const userid = user.id;
+  const otp = await  genotp(userid);
+
+  //later will add send otp with nodemaila and also whatsappwebjs
+
+
+  console.log(otp);
+
+
+  const token ='Bearer ' + gentok(userid,user.email,user.phone);
+
+  res.status(202).json({
+    message: `Otp send to ${user.phone || 'phone'}  via whatsapp and ${user.email || 'email'}`,
+    token
+  });
+
+  //later frontend should redirect on reset password where the token would be required as a header
+
+
 }
+
+catch(err){
+
+  console.log(err.message);
+
+  res.status(500).json({error: 'Something went wrong'});
+
+
+
+}
+
+
+};
+
+
+//reset pass now - token used here is from forgot pass
+
+export const resetpass = async (req,res) =>{
+
+  try{
+
+    if(!req.body) return res.status(400).json({error: 'Missing request body'});
+
+    const ah = req.headers['authorization'];
+    const {otp,newpassword} = req.body;
+
+
+
+
+
+    if(!ah) return res.status(401).json({error: 'Missing token'});
+    if(!(ah.startsWith('Bearer '))) return res.status(401).json({error: 'Invalid token format'});
+    if(!otp) return res.status(401).json({error: 'Missing otp'});
+
+    const token = ah.split(" ")[1];
+
+    //verify iyo token
+
+    const decoded = vertok(token);
+
+
+
+    if(!decoded || !decoded.id) return res.status(401).json({error: 'Invalid or expired token'});
+
+    const id = decoded.id;
+    const email = decoded.email;
+    const phone = decoded.phone;
+
+
+    //verify otp
+    const checkot = await verotp(id,otp.toString());
+    console.log(`entered otp ${otp}`);
+    if(checkot !== otp) return res.status(401).json({error: 'Invalid or expired otp'});
+
+    const hashpass = await bcrypt.hash(newpassword,10);
+
+
+
+
+    
+    if (email) {
+      await User.update({ password_hash: hashpass }, { where: { email } });
+    } else if (phone) {
+      await User.update({ password_hash: hashpass }, { where: { phone } });
+    } else {
+      return res.status(400).json({ error: 'Missing email or phone in token' });
+    }
+    
+ 
+
+    res.status(201).json({success: 'Password changed succesfully'});
+
+
+
+  }
+  catch(err)
+  {
+
+    console.log(err.message);
+    res.status(500).json({error: 'Could not change password'});
+
+  }
+
+
+};
   
 
 

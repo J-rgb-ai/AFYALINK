@@ -11,7 +11,7 @@ const redis = new Redis({
 });
 
 redis.on('connect',()=> {console.log('Redis connected')});
-redis.mode('error',()=> {console.log('Redis failed')});
+redis.on('error',()=> {console.log('Redis failed')});
 
 export default redis;
 

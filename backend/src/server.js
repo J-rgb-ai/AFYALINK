@@ -25,6 +25,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import sequelize from './config/db/orm/sequalize.js';
 import userrouter from './routes/authRoutes.js';
+import redis from './config/redis/redis.js';
 
 const app = express();
 dotenv.config();
@@ -34,10 +35,36 @@ app.use(express.json());
 app.use('/api/users',userrouter);
 
 
+//redis test
+
+try{
+
+  console.log('Connecting to redis server...')
+
+  await redis.set('ping','pong');
+  const dated = await redis.get('ping');
+  if(dated)  console.log('Connected to redis........')
+
+}
+catch(err){
+  console.log(`Could not connect to redis ${err.message}`);
+}
+
+
+
+
+
+
+
+
+
+
+
 //deb test
 
 
 try{
+  console.log('Connecting to database.....')
   await sequelize.authenticate();
   await sequelize.sync({alter:false});
   console.log('Models synced');
@@ -55,12 +82,29 @@ catch(err){
 
 
 
+
+
+
+
+
 const port = 3000 || process.env.PORT;
 
 
 
 app.get('/api/v1', (req,res)=>{
-  res.end('Welcome to afyalink api Version one');
+  res.status(200).json({message: 'Welcome here are the endpoints',
+    endpoints:{
+     users:[ ' POST users/sigunp',
+      'POST /users/signin',
+      'GET users/:id',
+      'POST /users/forgotpass',
+      'PUT users/resetpass'
+     ]
+    }
+  });
+
+
+
 })
 
 
@@ -104,5 +148,6 @@ app.get('/api/v1', (req,res)=>{
 
 
 app.listen(port,()=>{
-console.log(`Server running on port ${port}......`);
+console.log(`Backend Server running on port ${port}......`);
+console.log('Waiting for your requests now.....');
 });
