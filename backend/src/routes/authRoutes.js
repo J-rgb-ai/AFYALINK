@@ -13,14 +13,14 @@ module.exports = r;
 
 
 import express from 'express';
-import { signup,login } from '../controllers/authController.js';
+import { signup,login,userbyid } from '../controllers/authController.js';
 
 
 const userrouter = express.Router();
 
 userrouter.post('/signup',signup);
 userrouter.post('/signin',login);
-
+userrouter.get('/:id',userbyid);
 
 
 export default userrouter;

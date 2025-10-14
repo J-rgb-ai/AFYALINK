@@ -39,7 +39,7 @@ app.use('/api/users',userrouter);
 
 try{
   await sequelize.authenticate();
-  await sequelize.sync({alter:true});
+  await sequelize.sync({alter:false});
   console.log('Models synced');
 
   console.log('Connected to Database now');
@@ -48,6 +48,7 @@ try{
 catch(err){
 
   console.log('Nuh could not connect to db');
+  console.log(err.message);
 
 
 }

@@ -82,6 +82,7 @@ import bcrypt from 'bcrypt';
 import User from '../config/db/orm/ormmodels/user.js';
 import gentok from '../utils/jwt/genjwt.js';
 import Facility from '../config/db/orm/ormmodels/facility.js';
+import vertok from '../utils/jwt/verjwt.js';
 
 
 
@@ -127,15 +128,12 @@ const age =
 
 
     // Check for existing user
-    const existing = await User.findOne({ where: { email } });
+    const existing = await User.findOne({ where:  email ? {email}:{phone} });
     if (existing) {
-      return res.status(409).json({ error: 'User with that email already exists' });
+      return res.status(409).json({ error: `Sorry User with those details already exists` });
     }
 
-    //check duplicates
-    const existingphone = await User.findOne({where: {phone}});
-    if(existingphone) return res.status(409).json({error: 'User with that phone already exists'});
-
+   
     // Hash password
     const password_hash = await bcrypt.hash(password, 10);
    
@@ -154,6 +152,16 @@ const age =
       facility_id
     });
 
+
+    //get facility 
+
+    const facid = user.facility_id;
+    const fac = await Facility.findByPk(facid);
+
+    const facname = fac?.fac_name || 'Unknown';
+    const factype = fac?.fac_type || 'Unknown';
+
+
     // Generate JWT
     const token = 'Bearer '+ gentok(user.id, user.user_role);
 
@@ -166,7 +174,11 @@ const age =
         lname: user.lname,
         email: user.email,
         role: user.user_role,
-        age: user.age
+        age: user.age,
+        verified: user.is_verified,
+        facility: facname,
+        facility_type: factype,
+        joined: user.created_at
       },
       token
     });
@@ -187,11 +199,10 @@ export const login = async (req,res) =>{
 const {email,phone,password} = req.body;
 
 
+const user = await User.findOne({where: email ? { email } : { phone }});
 
-const user = await User.findOne({where: {email}});
-const userp = await User.findOne({wheere:{phone}});
 
-if(!user || !userp) return res.status(404).json({error: 'User with those details not found'});
+if(!user) return res.status(404).json({error: 'User with those details not found'});
 const passhash = user.password_hash;
 
 const verify_user = await bcrypt.compare(password,passhash);
@@ -199,6 +210,18 @@ const verify_user = await bcrypt.compare(password,passhash);
 if(!verify_user) return res.status(401).json({error: 'Invalid details..'});
 
 const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
+
+//get facilities ako ndani
+
+const facid = user.facility_id;
+
+const fac = await Facility.findByPk(facid);
+const facname = fac?.fac_name || 'Unknown';
+const factype = fac?.fac_type || 'Unknown';
+
+
+
+
 
 res.status(200).json({
   message: 'Login succesful',
@@ -210,7 +233,8 @@ res.status(200).json({
     role: user.user_role,
     age: user.age,
     verified: user.is_verified,
-    facility: user.facility,
+    facility: facname,
+    facility_type: factype,
     joined: user.created_at
   },
   token
@@ -222,6 +246,7 @@ res.status(200).json({
   catch(err){
 
     res.status(500).json({error: 'Failed to login user'});
+    console.log(err.message);
 
 
 
@@ -230,10 +255,99 @@ res.status(200).json({
 
 
 
-
-
-
 };
+
+
+//user by id /user/:id
+
+export const userbyid = async(req,res) =>{
+
+  try{
+
+    const id = req.params.id;
+
+
+    if(!id) return res.status(401).json({error: 'missing user id'});
+
+    if (!isNaN(parseInt(id))) {
+
+      const ah = req.headers['authorization'];
+
+      if(!ah) return res.status(401).json({error: 'Missing token'});
+
+      if(!ah.startsWith('Bearer ')) return res.status(401).json({error: 'Invalid token format'});
+      
+      //token was created by user id and email or phone
+
+      const token = ah.split(" ")[1];
+
+      const decoded = vertok(token);
+
+      if(!decoded) return res.status(401).json({error: 'Invalid or expired token or both '});
+
+      const decid = decoded.id;
+      const decem = decoded.email;
+      const decop = decoded.phone;
+
+      if(!(parseInt(decid) === parseInt(id))) return res.status(401).json({Bb: 'Nice try buddy'});
+
+      console.log('going to the db now eh');
+
+    
+
+      const user = await  User.findByPk(id);
+      if(!user) return res.status(404).json({error:'User does not exist'});
+
+      const facid = user.facility_id;
+      const fac = await Facility.findByPk(facid);
+      const facname = fac?.fac_name || 'Unknown';
+      const factype = fac?.fac_type || 'Unknown';
+    
+
+      //if(decem || decop){
+
+    if((decem && decem === user.email) || (decop && decop === user.phone)) return res.status(401).json({error: 'Unathorized action was detected'}); 
+
+
+      if(!user) return res.status(404).json({error: 'User not found'});
+
+      res.status(200).json({
+        message: `Welcome back ${user.fname}`,
+        user:{
+          id: user.id,
+          fname: user.fname,
+          lname: user.lname,
+          email: user.email,
+          role: user.user_role,
+          age: user.age,
+          verified: user.is_verified,
+          facility: facname,
+          facility_type: factype,
+          joined: user.created_at
+        }
+      })
+    }
+
+    
+
+
+
+
+
+  }
+  catch(err)
+  {
+
+    res.status(500).json({error: 'Failed to get user details'});
+    console.log(err.message);
+
+
+  }
+
+
+
+}
+  
 
 
 
