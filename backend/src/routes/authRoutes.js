@@ -13,7 +13,7 @@ module.exports = r;
 
 
 import express from 'express';
-import { signup,login,userbyid,forgotpass,resetpass } from '../controllers/authController.js';
+import { signup,login,userbyid,forgotpass,resetpass,veremail } from '../controllers/authController.js';
 
 
 const userrouter = express.Router();
@@ -23,6 +23,7 @@ userrouter.post('/signin',login);
 userrouter.get('/:id',userbyid);
 userrouter.post('/forgotpass',forgotpass);
 userrouter.put('/resetpass',resetpass);
+userrouter.post('/verify/email',veremail);
 
 export default userrouter;
 

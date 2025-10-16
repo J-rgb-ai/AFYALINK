@@ -25,6 +25,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import sequelize from './config/db/orm/sequalize.js';
 import userrouter from './routes/authRoutes.js';
+import adminroute from './routes/adminroute.js';
 import redis from './config/redis/redis.js';
 
 const app = express();
@@ -33,6 +34,7 @@ dotenv.config();
 
 app.use(express.json());
 app.use('/api/users',userrouter);
+app.use('/api/users/admin',adminroute);
 
 
 //redis test
@@ -92,13 +94,15 @@ const port = 3000 || process.env.PORT;
 
 
 app.get('/api/v1', (req,res)=>{
-  res.status(200).json({message: 'Welcome here are the endpoints',
+  res.status(200).json({message: 'Welcome to afyalink api. Here are  the endpoints',
     endpoints:{
-     users:[ ' POST users/sigunp',
+     users:[ 'POST users/sigunp',
       'POST /users/signin',
       'GET users/:id',
       'POST /users/forgotpass',
-      'PUT users/resetpass'
+      'PUT users/resetpass',
+      'POST /verify/email'
+
      ]
     }
   });

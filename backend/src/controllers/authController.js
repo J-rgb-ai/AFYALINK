@@ -86,11 +86,23 @@ import vertok from '../utils/jwt/verjwt.js';
 import genotp from '../utils/otp/genotp.js';
 import verotp from '../utils/otp/verotp.js';
 import { Fn } from 'sequelize/lib/utils';
+import { sendotpmail,sendregmail,respasmail } from '../utils/mail/mailer.js';
 
 
 
 
 dotenv.config();
+
+
+const emailreg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+function capfast(str){
+  if(typeof str !== 'string' || str.length === 0) return 'Fuck you';
+
+  return str.charAt(0).toLocaleUpperCase() + str.slice(1);
+
+}
 
 
 
@@ -112,6 +124,9 @@ export const signup = async (req, res) => {
     if (!fname || !lname || !email || !password || !phone || !dob || !gender) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    const valemal = emailreg.test(email);
+
+    if(!valemal) return res.status(400).json({error: 'Invalid email format'});
 
     if(user_role === 'admin') return res.status(401).json({warning: 'You have no such privileges'});
 
@@ -165,7 +180,11 @@ const age =
 
 
     // Generate JWT
-    const token = 'Bearer '+ gentok(user.id, user.user_role);
+    const token = 'Bearer '+ gentok(user.id, user.email,user.phone,user.user_role);
+    const otp = await genotp(user.id);
+    console.log(otp); //get rid of it in production usisahau we mzee
+    await sendotpmail(user.email,otp);
+
 
     // Respond
     res.status(201).json({
@@ -184,10 +203,130 @@ const age =
       },
       token
     });
+
+  
+
+    const regname = capfast(user.fname) + ' ' + capfast(user.lname);
+    const regrole = capfast(user.user_role);
+    const regstat = capfast(user.is_verified) + " " + 'Please verify email';
+   const regfac = capfast(factype);
+const template = `<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Afyalink Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Congragulations for registering with  afyalink today</h2>
+    <p class="value"><span class="label">Name:</span> ${regname}</p>
+    <p class="value"><span class="label">Email:</span> ${user.email}</p>
+    <p class="value"><span class="label">Role:</span> ${regrole}</p>
+    <p class="value"><span class="label">Age:</span> ${user.age}</p>
+    <p class="value"><span class="label">Verified:</span> ${regstat} </p>
+    <p class="value"><span class="label">Facility:</span> ${facname}</p>
+    <p class="value"><span class="label">Facility Type:</span> ${regfac} </p>
+    <p class="value"><span class="label">Joined:</span> ${user.created_at}</p>
+
+    <div class="footer">
+      Thank you for registering with Afyalink. If you have any questions, please hesitate to reach out.
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+
+///congrats to user for registering
+await sendregmail(user.email,template);
+
+
+
   } catch (err) {
-    console.error('Signup error:', err); // 👈 this will show the real issue
+    console.error('Signup error:', err); // 👈 this will show the real issue i mean it should but it may not still 
     res.status(500).json({ error: 'Failed to register user' });
   }
+};
+
+//verify email
+
+export const veremail = async (req,res) =>{
+
+try{
+  if(!req.body)   throw new Error('Missing request body');
+
+  const {otp} = req.body;
+
+  const ah = req.headers['authorization'];
+  
+  if(!ah) return res.status(401).json({error: 'Missing token'});
+  if(!otp) return res.status(401).json({error: 'Missing otp field'});
+  if(!(ah.startsWith("Bearer "))) return res.status(401).json({error: 'Invalid token format'});
+  const token = ah.split(" ")[1];
+  const decoded = vertok(token);
+
+  if(!decoded) return res.status(401).json({error: 'Invalid or expired token'});
+
+  const id = decoded.id;
+  const email = decoded.email;
+
+  const user = await User.findByPk(id);
+  if(!user) return res.status(401).json({error: 'Something went wrong with the db'})
+    if(user.is_verified) return res.status(200).json({heads: 'Email had already been verified'});
+    if(user.is_verified === false){
+
+        const stordo = await verotp(user.id);
+        if(stordo !== otp) return res.json({error: 'Invalid or expired otp'});
+
+        await User.update({is_verified: true},{where: {email}});
+        res.status(201).json({success: 'Email verified succesful'}); //if only i was a good dev man...am not even trying
+        //like wtf is this trashy cide man..I expected much more from you
+
+    }
+
+}
+catch(err)
+{
+
+  console.log(err.message);
+  res.status(500).json({error: 'Could not verify email'});
+
+
+}
+
+
+
 };
 
 
@@ -364,13 +503,19 @@ try{
   if(!email && !phone) return res.status(401).json({error: 'Missing email or phone'});
 
   const user = await User.findOne({where: {...(email && {email}), ...(phone && {phone})}});
-
   if(!user) return res.status(404).json({error: 'No user with such details..'});
+
+  const verified = user.is_verified; //stored as boolean in db 
+
+  if(!verified) return res.status(401).json({error: 'Email was not verified yet'});
+
+  
 
   const userid = user.id;
   const otp = await  genotp(userid);
 
   //later will add send otp with nodemaila and also whatsappwebjs
+  await sendotpmail(user.email,otp);
 
 
   console.log(otp);
@@ -449,11 +594,77 @@ export const resetpass = async (req,res) =>{
     
     if (email) {
       await User.update({ password_hash: hashpass }, { where: { email } });
+
+      const user = await  User.findOne({where:{email}});
+
+      const usname = capfast(user.fname);
+
+
+
+      const template = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Password Changed</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .message {
+      margin-top: 10px;
+      font-size: 1.1em;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔐 Password Changed Successfully</h2>
+    <p class="message">
+      Hello,<br><br>
+      Dear <strong>${usname}</strong><b>
+      Your Afyalink account password has been updated successfully.<br>
+      You can now log in with your new password.<br>
+       If you did not initiate this change, please contact our support team immediately.
+      
+    </p>
+
+    <div class="footer">
+      <i>This is an automated message. Please do not reply directly to this email.</i>
+    </div>
+  </div>
+</body>
+</html>
+`;
+    
+
+        await respasmail(email,template);
+      
     } else if (phone) {
       await User.update({ password_hash: hashpass }, { where: { phone } });
     } else {
       return res.status(400).json({ error: 'Missing email or phone in token' });
     }
+
+    
     
  
 

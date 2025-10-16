@@ -3,7 +3,7 @@ import redis from "../../config/redis/redis.js";
 
 
 
-const verotp = async (userId, inputOtp) => {
+const verotp = async (userId) => {
     const key = `otp:${userId}`;
     const storedOtp = await redis.get(key);
     console.log(storedOtp);
