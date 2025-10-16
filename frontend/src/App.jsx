@@ -8,6 +8,9 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import LandingPage from "./pages/LandingPage";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import Chat from "./pages/chat";
+import NurseDashboard from "./pages/Nurse";
+import PatientDashboard from "./pages/Patient";
 
 function App() {
   return (
@@ -19,6 +22,9 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/landingpage" element={<LandingPage />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+        <Route path="/patient-dashboard" element={<PatientDashboard/>} />
       </Routes>
     </Router>
   );

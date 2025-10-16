@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const styles = {
   root: {
@@ -7,7 +9,10 @@ const styles = {
     padding: '18px',
     fontFamily: 'Inter, system-ui, Segoe UI, Roboto, Arial',
     color: '#0f1720',
-    background: '#f0f0f0',
+    backgroundImage: "url('https://thumbs.dreamstime.com/z/female-surgeon-operating-assistants-surgeons-work-blue-filter-modern-medicine-professional-doctors-female-surgeon-180933368.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
     minHeight: '100vh',
   },
   header: {
@@ -153,6 +158,7 @@ const styles = {
 };
 
 const DoctorDashboard = () => {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [today, setToday] = useState('');
   const [activeSection, setActiveSection] = useState('overview');
@@ -166,7 +172,7 @@ const DoctorDashboard = () => {
     { id: 1002, when: '2025-09-23', patientName: 'John Otieno', mrn: 'MRN002', to: 'Orthopedics - Central', status: 'Accepted', notes: 'Knee pain' },
     { id: 1003, when: '2025-09-21', patientName: 'Mary Achieng', mrn: 'MRN003', to: 'Endocrinology - City Clinic', status: 'Completed', notes: 'Follow-up diabetes' },
   ]);
-  const [appointments, setAppointments] = useState([
+  const [appointments] = useState([
     { when: '2025-09-26 09:00', patient: 'Jane Wanjiru', type: 'Follow-up' },
     { when: '2025-09-26 11:30', patient: 'New: Peter Otieno', type: 'New patient' },
     { when: '2025-09-26 14:00', patient: 'John Otieno', type: 'Review' },
@@ -175,7 +181,7 @@ const DoctorDashboard = () => {
     { id: 1, with: 'Jane Wanjiru', last: 'Can we reschedule?', unread: 1, conversation: [{ from: 'patient', text: 'Can we reschedule?', when: '09:12' }, { from: 'me', text: 'Sure, available 11am', when: '09:15' }] },
     { id: 2, with: 'Dr. Njoroge', last: 'Accepted referral #1001', unread: 0, conversation: [{ from: 'colleague', text: 'Accepted referral #1001', when: '08:40' }] },
   ]);
-  const [loginHistory, setLoginHistory] = useState([
+  const [loginHistory] = useState([
     { when: '2025-09-25 16:00', device: 'Chrome on Windows', ip: '102.12.45.3' },
     { when: '2025-09-22 09:05', device: 'iPad', ip: '102.12.88.11' },
   ]);
@@ -190,11 +196,19 @@ const DoctorDashboard = () => {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (user && user.role === 'doctor') {
-      setCurrentUser(user);
+    if (!user || user.role !== 'doctor') {
+      navigate('/login');
+      return;
+    }
+    setCurrentUser(user);
+    if (!localStorage.getItem('users')) {
+      localStorage.setItem('users', JSON.stringify([
+        { fullName: 'Test Patient 1', email: 'patient1@test.com', role: 'patient' },
+        { fullName: 'Test Patient 2', email: 'patient2@test.com', role: 'patient' }
+      ]));
     }
     setToday(new Date().toLocaleDateString());
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     localStorage.setItem('doctorTasks', JSON.stringify(tasks));
@@ -279,8 +293,8 @@ const DoctorDashboard = () => {
           <div className="small" style={{ color: '#fff', fontSize: '13px' }}>
             Today: <strong>{today}</strong>
           </div>
-          <button style={styles.btn} onClick={() => window.location.href = 'Dpd.html'}>Profile</button>
-          <button style={styles.btn} onClick={() => { if (window.confirm('Sign out?')) { localStorage.clear(); window.location.href = 'login.html'; } }}>Sign out</button>
+          <button style={styles.btn} onClick={() => navigate('/dpd')}>Profile</button>
+          <button style={styles.btn} onClick={() => { if (confirm('Sign out?')) { localStorage.clear(); navigate('/login'); } }}>Sign out</button>
         </div>
       </header>
 
@@ -291,7 +305,7 @@ const DoctorDashboard = () => {
             { key: 'patients', label: 'Patients', icon: '👥' },
             { key: 'referrals', label: 'Referrals', icon: '🔄' },
             { key: 'appointments', label: 'Appointments', icon: '📅' },
-            { key: 'messages', label: 'Messages', icon: '💬', href: 'chat.html' },
+            { key: 'messages', label: 'Messages', icon: '💬' },
             { key: 'documents', label: 'Documents', icon: '📄' },
             { key: 'analytics', label: 'Analytics', icon: '📈' },
             { key: 'security', label: 'Security & Logs', icon: '🔒' },
@@ -303,7 +317,9 @@ const DoctorDashboard = () => {
                 ...(activeSection === key ? styles.navButtonActive : {}),
               }}
               onClick={() => {
-                if (href) {
+                if (key === 'messages') {
+                  navigate('/chat');
+                } else if (href) {
                   window.location.href = href;
                 } else {
                   setActiveSection(key);
@@ -549,8 +565,7 @@ const DoctorDashboard = () => {
                     id="msgSearch"
                     placeholder="Search conversations"
                     style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.06)' }}
-                    onChange={(e) => {
-                      const q = e.target.value.toLowerCase();
+                    onChange={() => {
                       // Filter conversations by name or last message
                       // For simplicity, not implemented here
                     }}
@@ -692,6 +707,16 @@ const DoctorDashboard = () => {
           )}
         </main>
       </div>
+      <footer style={{ padding: '2rem 4vw', color: '#fff', textAlign: 'center', background: 'rgba(44,62,80,0.7)', borderRadius: '24px 24px 0 0', marginTop: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><FaFacebook size={24} style={{ color: '#f6ad55' }} /></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><FaTwitter size={24} style={{ color: '#f6ad55' }} /></a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"><FaLinkedin size={24} style={{ color: '#f6ad55' }} /></a>
+        </div>
+        <div style={{ fontSize: '1rem', color: '#e2e8f0' }}>
+          &copy; {new Date().getFullYear()} AFYALINK. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 };
