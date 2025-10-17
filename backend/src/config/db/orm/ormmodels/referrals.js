@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequelize.js';
-import Patient from './patient.js';
+import sequelize from '../sequalize.js';
+import Patient from './patients.js';
 import User from './user.js';
 import Facility from './facility.js';
 
@@ -87,3 +87,6 @@ Patient.hasMany(Referral, { foreignKey: 'patient_id' });
 User.hasMany(Referral, { foreignKey: 'reffering_user_id', as: 'referralsMade' });
 Facility.hasMany(Referral, { foreignKey: 'reffering_facility_id', as: 'outgoingReferrals' });
 Facility.hasMany(Referral, { foreignKey: 'receiving_facility_id', as: 'incomingReferrals' });
+
+
+export default Referral;

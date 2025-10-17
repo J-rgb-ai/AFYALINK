@@ -1,13 +1,14 @@
 
 import express from 'express';
-import { admindash } from '../controllers/adminctrl.js';
+import { adminauth,admindash } from '../controllers/adminctrl.js';
 
 
 
 
 const adminroute = express.Router();
 
-adminroute.get('/dashboard', admindash);
+adminroute.get('/auth', adminauth);
+adminroute.get('/dashboard',admindash);
 
 
 

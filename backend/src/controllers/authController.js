@@ -104,6 +104,8 @@ function capfast(str){
 
 }
 
+//TODO
+/* Get a working whatsapp bot by whatsappwebjs to send otps*/
 
 
 export const signup = async (req, res) => {
@@ -336,9 +338,13 @@ catch(err)
 export const login = async (req,res) =>{
 
   try{
+if(!req.body) return res.status(401).json({error: 'Missing request body'});
+  const {email,phone,password} = req.body;
+if(!password || !(email || phone) ) return  res.status(401).json({error: 'Please fill in the necessary details'}); 
 
-const {email,phone,password} = req.body;
+const checkm = emailreg.test(email);
 
+if(!checkm) return res.status(401).json({error: 'Please enter a valid email '});
 
 const user = await User.findOne({where: email ? { email } : { phone }});
 
@@ -350,15 +356,67 @@ const verify_user = await bcrypt.compare(password,passhash);
 
 if(!verify_user) return res.status(401).json({error: 'Invalid details..'});
 
-const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
-
-//get facilities ako ndani
-
 const facid = user.facility_id;
 
 const fac = await Facility.findByPk(facid);
 const facname = fac?.fac_name || 'Unknown';
 const factype = fac?.fac_type || 'Unknown';
+
+
+if(user.user_role === 'admin') {
+
+  //token admin atapewa uku ataenda nayo admin/auth
+
+  const adminpay = { message: `Welcome admin ${user.fname}`,
+                    admin:{
+                        id: user.id,
+                        fname: user.fname,
+                        lname: user.lname,
+                        email: user.email,
+                        role: user.user_role,
+                        age: user.age,
+                        verified: user.is_verified,
+                        facility: facname,
+                        facility_type: factype,
+                        joined: user.created_at
+                    }};
+
+if(!user.is_verified){
+
+  const token = 'Bearer ' + gentok(user.id,user.email || user.phone);
+  return res.status(401).json({
+    Message: "please verify user first",
+    verfificationToken: token
+  });
+}
+
+const admintok = 'Bearer ' +  gentok(adminpay);
+const otp = await  genotp(user.id);
+console.log(`The otp  ${otp} was generated for admin`);
+
+//TODO add a subject as param in send otpmail func..au sio
+await sendotpmail(user.email,otp);
+
+
+return res.status(200).json({
+    adminpay,
+    admintoken: admintok
+        
+});
+
+//TODO send otp if user is admin
+  
+
+}
+
+
+
+
+//get facilities ako ndani
+else {
+const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
+
+
 
 
 
@@ -378,10 +436,10 @@ res.status(200).json({
     facility_type: factype,
     joined: user.created_at
   },
-  token
+  usertoken: token
 
 });
-
+};
 
   }
   catch(err){
@@ -447,7 +505,8 @@ export const userbyid = async(req,res) =>{
 
       //if(decem || decop){
 
-    if((decem && decem === user.email) || (decop && decop === user.phone)) return res.status(401).json({error: 'Unathorized action was detected'}); 
+    //if(!(decem)&& !(decem === user.email) || !(decop) && !(decop === user.phone)) return res.status(401).json({error: 'Unathorized action was detected'}); 
+      if(!decid || !decem)  return res.status(401).json({error: 'Tokeno  es envalido  muchacho'});
 
 
       if(!user) return res.status(404).json({error: 'User not found'});
@@ -490,6 +549,8 @@ export const userbyid = async(req,res) =>{
 };
 
 
+
+
 //user/forgotpass
 
 
@@ -518,7 +579,7 @@ try{
   await sendotpmail(user.email,otp);
 
 
-  console.log(otp);
+  console.log(otp); //get rid of this in production
 
 
   const token ='Bearer ' + gentok(userid,user.email,user.phone);

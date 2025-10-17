@@ -101,7 +101,10 @@ app.get('/api/v1', (req,res)=>{
       'GET users/:id',
       'POST /users/forgotpass',
       'PUT users/resetpass',
-      'POST /verify/email'
+      'POST users/verify/email',
+      'GET users/admin/auth',
+      'GET users/admin/dashboard'
+
 
      ]
     }

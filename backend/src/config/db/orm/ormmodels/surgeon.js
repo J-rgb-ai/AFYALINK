@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../sequalize.js';
 import User from './user.js';
-import Doctor from './doctor.js';
+import Doctor from './doctors.js';
 import Facility from './facility.js';
 
 const Surgeon = sequelize.define('Surgeon', {

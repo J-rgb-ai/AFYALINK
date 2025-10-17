@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequelize.js';
+import sequelize from '../sequalize.js';
 import Patient from './patients.js';
 import Labtech from './labtechs.js';
 import Referral from './referrals.js'; // optional, if you plan to use referral_id
