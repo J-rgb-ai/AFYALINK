@@ -107,7 +107,17 @@ function LoginForm() {
     } else if (userRole === 'patient') {
       navigate('/patient-dashboard');
     } else if (userRole === 'labtech') {
-      navigate('/labTech-dashboard');
+      navigate('/labtech-new');
+    } else if (userRole === 'referral_manager') {
+      navigate('/referral-manager');
+    } else if (userRole === 'admin') {
+      navigate('/admin');
+    } else if (userRole === 'secretary') {
+      navigate('/secretary');
+    } else if (userRole === 'surgeon') {
+      navigate('/surgeon');
+    } else if (userRole === 'account_clerk') {
+      navigate('/account_clerk');
     } else {
       setError('Unknown role. Please contact support.');
     }
