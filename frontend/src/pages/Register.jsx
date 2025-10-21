@@ -100,6 +100,18 @@ function Register() {
       return;
     }
     setError('');
+    // Store the selected role in localStorage for demo purposes
+    localStorage.setItem('userRole', formData.role);
+    // Store user data in localStorage
+    const userData = {
+      fullName: formData.username,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      idNumber: formData.idNumber,
+      role: formData.role,
+      uniqueId: `ID${Date.now()}`
+    };
+    localStorage.setItem('currentUser', JSON.stringify(userData));
     alert(`Registration submitted for role: ${formData.role}`);
     navigate('/login');
   };
@@ -155,10 +167,10 @@ function Register() {
           style={styles.select}
         >
           <option value="" disabled>Select Role</option>
-          <option value="Doctor">Doctor</option>
-          <option value="Nurse">Nurse</option>
-          <option value="Lab Tec">Lab Tec</option>
-          <option value="Patient">Patient</option>
+          <option value="doctor">Doctor</option>
+          <option value="nurse">Nurse</option>
+          <option value="labtech">Lab Tech</option>
+          <option value="patient">Patient</option>
         </select>
         <input
           type="password"

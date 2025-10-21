@@ -87,14 +87,29 @@ function LoginForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // For now, restrict login to users with role 'Doctor' only
-    // Since role is not selected here, assume email check or other logic
-    if (formData.email.endsWith('@doctor.com')) {
-      setError('');
-      alert('Login successful!');
+    // Retrieve the role from localStorage (set during registration)
+    const userRole = localStorage.getItem('userRole');
+    if (!userRole) {
+      setError('No role found. Please register first.');
+      return;
+    }
+    setError('');
+    // Set currentUser in localStorage for dashboard access
+    const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    storedUser.email = formData.email; // Update email if needed
+    localStorage.setItem('currentUser', JSON.stringify(storedUser));
+    alert('Login successful!');
+    // Redirect based on role
+    if (userRole === 'doctor') {
       navigate('/doctor-dashboard');
+    } else if (userRole === 'nurse') {
+      navigate('/nurse-dashboard');
+    } else if (userRole === 'patient') {
+      navigate('/patient-dashboard');
+    } else if (userRole === 'labtech') {
+      navigate('/labTech-dashboard');
     } else {
-      setError('Access restricted: Only Doctors can login for now.');
+      setError('Unknown role. Please contact support.');
     }
   };
 

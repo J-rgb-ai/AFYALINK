@@ -11,11 +11,10 @@ const PatientDashboard = () => {
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     setUser(storedUser);
-    // Temporarily disabled auth check for testing
-    // if (!storedUser || storedUser.role !== 'patient') {
-    //   navigate('/login');
-    //   return;
-    // }
+    if (!storedUser || storedUser.role !== 'patient') {
+      navigate('/login');
+      return;
+    }
     // Initialize chart
     try {
       const ctx = chartRef.current.getContext('2d');
