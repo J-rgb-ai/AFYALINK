@@ -167,9 +167,14 @@ function Register() {
           style={styles.select}
         >
           <option value="" disabled>Select Role</option>
+          <option value="admin">Admin</option>
           <option value="doctor">Doctor</option>
           <option value="nurse">Nurse</option>
           <option value="labtech">Lab Tech</option>
+          <option value="secretary">Secretary</option>
+          <option value="surgeon">Surgeon</option>
+          <option value="account_clerk">Account Clerk</option>
+          <option value="referral_manager">Referral Manager</option>
           <option value="patient">Patient</option>
         </select>
         <input

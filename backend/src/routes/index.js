@@ -25,7 +25,6 @@ users/nurses/login
 
 
 
-router.post()
 router.get("/", landingPage);
 router.get("/backendhome", (req, res) => {
   res.json({ status: "Backend is running ✅" });

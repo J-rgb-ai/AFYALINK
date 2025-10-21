@@ -1,7 +1,6 @@
 const createPool = require('./db');
-require('dotenv').config;
+require('dotenv').config();
 
-const docdb = await createPool(process.env.DOCTOR,process.env.DOCTOR_PASS);
+const docdb = createPool(process.env.DOCTOR,process.env.DOCTOR_PASS);
 
 module.exports = docdb.promise();
-

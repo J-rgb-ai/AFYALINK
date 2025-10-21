@@ -86,7 +86,7 @@ const filetype = require('file-type');
 
 //filter pic ita uploadiwa
 
-const photofilter = (req,file,cb) {
+const photofilter = (req, file, cb) => {
   const allowed = ['image/jpeg','image/png','image/webp'];
 
   if(allowed.includes(file.mimetype)){
@@ -112,7 +112,7 @@ const ismage = async(buffer) =>{
 
 
 
-const upload => multer({
+const upload = multer({
   storage: multer.memoryStorage(),
   photofilter,
   limits: {fileSize: 15 * 1024 * 1024}
@@ -313,7 +313,7 @@ exports.userLogin = async (req,res) =>{
 exports.loginVerify = async (req,res) =>{
 
   const ah = req.headers['authorization'];
-  if(!ah?.startsWith('Bearer ')) return res.status(500).json(erroe:'Missing or invalid token');
+  if(!ah?.startsWith('Bearer ')) return res.status(500).json({error:'Missing or invalid token'});
 
   const token = ah.split('')[1];
   const decoded = verjwt(token);
@@ -339,7 +339,7 @@ exports.loginVerify = async (req,res) =>{
     await redis.del(`otp:${phone}`);
     await redis.del(`otp:${email}`);
     
-    const [rows] = await db.query(/*
+    const [rows] = await dba.query(/*
       'SELECT id, role FROM users WHERE phone = ? OR email = ?',
       [phone, email]*/
     );

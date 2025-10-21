@@ -4,10 +4,6 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const cors = require("cors");
 
-console.log("[DEBUG] Requiring database pool...");
-const pool = require("./config/db");
-console.log("[DEBUG] Database pool required.");
-
 dotenv.config();
 
 const app = express();
@@ -17,6 +13,14 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(helmet());
 
+// Routes
+const indexRoutes = require('./routes/index');
+const authRoutes = require('./routes/authRoutes');
+const labtechRoutes = require('./routes/labtechRoutes');
+
+app.use('/', indexRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/labtech', labtechRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "Backend is running ✅" });
@@ -25,6 +29,8 @@ app.get("/health", (req, res) => {
 // DB test
 app.get("/db-test", async (req, res) => {
   try {
+    const createPool = require("./config/db/db");
+    const pool = await createPool(process.env.DB_USER, process.env.DB_PASS);
     const [rows] = await pool.query("SELECT 1 + 1 AS result");
     res.json({ success: true, result: rows[0].result });
   } catch (error) {
