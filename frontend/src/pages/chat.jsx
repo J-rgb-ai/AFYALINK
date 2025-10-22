@@ -149,15 +149,27 @@ const Chat = () => {
       case 'doctor': return '/doctor-dashboard';
       case 'specialist': return '/specialist-dashboard';
       case 'admin': return '/admin-dashboard';
+      case 'nurse': return '/nurse-dashboard';
+      case 'secretary': return '/secretary-dashboard';
+      case 'surgeon': return '/surgeon-dashboard';
+      case 'account_clerk': return '/account-clerk-dashboard';
+      case 'referral_manager': return '/referral-manager-dashboard';
+      case 'labtech': return '/labtech-dashboard';
       default: return '/login';
     }
   };
 
   const getAllowedUsers = () => {
     if (currentUser.role === 'patient') {
-      return allUsers.filter(u => u.role === 'doctor' || u.role === 'specialist');
-    } else if (currentUser.role === 'doctor' || currentUser.role === 'specialist') {
-      return allUsers.filter(u => u.role === 'patient');
+      return allUsers.filter(u => ['doctor', 'referral_manager', 'nurse'].includes(u.role));
+    } else if (currentUser.role === 'doctor') {
+      return allUsers.filter(u => ['patient', 'referral_manager', 'nurse', 'labtech'].includes(u.role));
+    } else if (currentUser.role === 'referral_manager') {
+      return allUsers.filter(u => ['doctor', 'patient'].includes(u.role));
+    } else if (currentUser.role === 'nurse') {
+      return allUsers.filter(u => ['doctor', 'patient'].includes(u.role));
+    } else if (currentUser.role === 'labtech') {
+      return allUsers.filter(u => u.role === 'doctor');
     }
     return [];
   };

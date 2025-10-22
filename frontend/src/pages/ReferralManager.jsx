@@ -549,35 +549,21 @@ const ReferralManager = () => {
               color: '#fff'
             }}>
               <h2 style={{ marginTop: 0 }}>Messages & Communications</h2>
-              <div>
-                {messages.map(m => (
-                  <div key={m.id} style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    marginBottom: '0.5rem'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <strong>{m.from}</strong>
-                        <p style={{ margin: '0.25rem 0', color: '#e2e8f0' }}>{m.text}</p>
-                        <small style={{ color: '#ccc' }}>{m.timestamp}</small>
-                      </div>
-                      {m.unread && (
-                        <span style={{
-                          background: '#ef4444',
-                          color: '#fff',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '999px',
-                          fontSize: '0.75rem'
-                        }}>
-                          New
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p>Access your chat messages and communications.</p>
+              <button
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: '#3b82f6',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '1rem'
+                }}
+                onClick={() => navigate('/chat')}
+              >
+                Open Chat
+              </button>
             </div>
           )}
 

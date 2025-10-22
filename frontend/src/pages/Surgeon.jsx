@@ -50,6 +50,19 @@ const SurgeonDashboard = () => {
               padding: '0.5rem 1rem',
               cursor: 'pointer'
             }}
+            onClick={() => navigate('/chat')}
+          >
+            Messages
+          </button>
+          <button
+            style={{
+              background: '#f6ad55',
+              color: '#2a4365',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.5rem 1rem',
+              cursor: 'pointer'
+            }}
             onClick={() => { if (confirm('Sign out?')) { localStorage.clear(); navigate('/login'); } }}
           >
             Sign out

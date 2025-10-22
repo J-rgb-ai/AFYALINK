@@ -294,6 +294,7 @@ const DoctorDashboard = () => {
             Today: <strong>{today}</strong>
           </div>
           <button style={styles.btn} onClick={() => navigate('/dpd')}>Profile</button>
+          <button style={styles.btn} onClick={() => navigate('/chat')}>Messages</button>
           <button style={styles.btn} onClick={() => { if (confirm('Sign out?')) { localStorage.clear(); navigate('/login'); } }}>Sign out</button>
         </div>
       </header>

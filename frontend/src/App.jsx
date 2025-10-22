@@ -15,7 +15,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import Chat from "./pages/chat";
 import NurseDashboard from "./pages/Nurse";
 import PatientDashboard from "./pages/Patient";
-import LabTechDashboard from "./pages/Labtech";
+import LabTechDashboard from "./pages/LabtechNew";
 import LabtechNew from "./pages/LabtechNew";
 import ReferralManager from "./pages/ReferralManager";
 import AdminDashboard from "./pages/Admin";
