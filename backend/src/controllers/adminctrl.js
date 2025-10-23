@@ -18,6 +18,9 @@ import Visit from '../config/db/orm/ormmodels/visits.js';
 import LabResult from '../config/db/orm/ormmodels/labres.js';
 import Payment from '../config/db/orm/ormmodels/payments.js';
 import Department  from '../config/db/orm/ormmodels/departments.js';
+import AuditLog from '../config/db/orm/ormmodels/auditlog.js';
+import { request } from 'express';
+import { genmail } from '../utils/mail/mailer.js';
 
 
 
@@ -49,7 +52,7 @@ export const adminauth = async (req,res) =>{
     const decoded = vertok(token);
     const  adm = decoded?.id?.admin;
     console.log(adm);
-    if(!decoded || !adm|| !adm.verified || !adm.email || adm.role !== 'admin') return res.status(401).json({error:'Something fishy..did you smuggle this token?'});
+    if(!decoded || !adm|| !adm.verified || !adm.email || !(adm.role === 'admin' || adm.role === 'iadmin')) return res.status(401).json({error:'Something fishy..did you smuggle this token?'});
     const storedo = await verotp(adm.id);
 
     if(otp !== storedo) return res.status(401).json({error: 'Invalid or expired otp'});
@@ -58,13 +61,13 @@ export const adminauth = async (req,res) =>{
     const email = adm.email;
     const user = await User.findOne({where: {email}});
     if(!user) return res.status.json({error: 'admin not found'});
-    if(user.user_role !== 'admin' || !user.is_verified) return res.status(401).json({error: 'You are not  an elgible admin'});
+    if(!(user.user_role === 'admin' || user.user_role === 'iadmin') || !user.is_verified) return res.status(401).json({error: 'You are not  an elgible admin'});
     const facid = user.facility_id;
     const fac = await Facility.findByPk(facid);
     const facname = fac?.fac_name || 'Unknown';
     const factype = fac?.fac_type || 'Unknown';
 
-    const adminpay = { message: `Welcome admin ${user.fname}`,
+    const adminpay = { message: `Welcome admin ${user.fname} Your login has been verified `,
                     admin:{
                         id: user.id,
                         fname: user.fname,
@@ -86,6 +89,10 @@ export const adminauth = async (req,res) =>{
             adminpay,
             admintoken: admintok
         });
+
+
+
+        //TDO send admin email that he logged in and also send to main admin that iadmin logged in
     }
 
 
@@ -126,7 +133,7 @@ export const admindash = async (req,res) =>{
     console.log(adm);
 
     if(!decoded) return res.status(401).json({error:'This token is invalid bro'});
-    if(!adm.hauth ||adm.role !== 'admin' || !adm.verified) return res.status(401).json({error: 'Seems like a smuggled token to me'});
+    if(!adm.hauth ||!(adm.role === 'admin' ||  adm.role ==='iadmin') || !adm.verified) return res.status(401).json({error: 'Seems like a smuggled token to me'});
 
     const id = adm.id;
     const user = await User.findByPk(id);
@@ -140,6 +147,7 @@ export const admindash = async (req,res) =>{
     //payloads
 
     //admin
+    //this will be the basis for selecting users for adding deleting make iadmins etc..
 
     const adminpay =  { message: `Welcome to  admin dashboard Admin:  ${user.fname}`,
     admin:{
@@ -201,10 +209,14 @@ export const admindash = async (req,res) =>{
 
 //fetch from users where is refmanager or admin
 const refrole = 'refmanager';
+const unapman = 'refmanagertobe';
 const admirole = 'admin';
+const subadm = 'iadmin'
 
 const getref = await User.findAll({where:{user_role:refrole}, attributes:{exclude:['password_hash']}});
 const getad = await User.findAll({where:{user_role:admirole},attributes:{exclude:['password_hash']}});
+const getsu = await User.findAll({where:{user_role: subadm},attributes:{exclude:['password_hash']}});
+const gett = await  User.findAll({where:{user_role:unapman}},{attributes:{exclude:['password_hash']}});
 
 console.log(allus);
 
@@ -228,8 +240,12 @@ console.log(allus);
             BlockchainLogs: allb
          },
          Main:{
-            RefManagers: getref,
-            Admins: getad
+            RefManagers: {
+              approved: getref,
+              awaiting: gett
+            },
+            MainAdmin: getad,
+            Admins: getsu
 
          }
     });
@@ -264,7 +280,7 @@ export const adminlog = async(req,res) =>{
 
 
         //if there s a search query..imma head to that in a few....
-        if(!req.query) {
+        if(req.query) {
             const search = req.query;
         }
 
@@ -274,8 +290,49 @@ export const adminlog = async(req,res) =>{
 
         const token = ah.split(" ")[1];
 
-        //narudi acha nfike soko 
+        const decoded = vertok(token);
+        if(!decoded) return res.status(401).json({error: 'Invalid or expired token'});
 
+        const adm = decoded?.id?.admin;
+        if(!adm || !adm.hauth || !( adm.role === 'admin' || adm.role ===  'iadmin')) return res.status(401).json({error: 'You are not an admin'});
+
+        const id = adm.id;
+
+        const user = await User.findByPk(id);
+        if(!user) return res.status(404).json({error: 'Admin not found'});
+        const facid = user.facility_id;
+        const fac = await Facility.findByPk(facid);
+        const facname = fac?.fac_name || "unknown";
+        const factype = fac?.fac_type || "Unknown";
+        const logs = await AuditLog.findAll();
+        console.log(logs);
+
+        const adminpay =  { message: `Welcome to  admin Logs  Admin:  ${user.fname}`,
+        admin:{
+            id: user.id,
+            fname: user.fname,
+            lname: user.lname,
+            email: user.email,
+            role: user.user_role,
+            age: user.age,
+            verified: user.is_verified,
+            facility: facname,
+            facility_type: factype,
+            hauth: true,
+            joined: user.created_at
+        }};
+
+
+        res.status(200).json({
+            adminpay,
+            logs
+        });
+
+
+
+
+        //narudi acha nfike soko 
+//ndo kutoke wikendi..wtf is this..who wrote this code...nashangaa hizi ni ma what nlikua naandikaaa
 
 
 
@@ -297,9 +354,838 @@ export const adminlog = async(req,res) =>{
 
 
 
+}
+
+
+//admin/create
+
+/**
+ * only admin and iadmin can create iadmins from existing verified users
+ * users with therole of assign to be admins
+ * Only admin can delete  admins but iadmin cant delete admins or iadmins
+ * admin cant delete himself but iadmin can delete himself
+ * use auth token from admin/auth 
+ * when iadmin is deleted he just becomes a regular user or just delete permanently depending on req.body delt = 'yes || 'no'
+ * admin to be made is a  selected user from admins dashboard and parse id to setid or delid depending on make admin or crreate admin
+ */
+
+export const createadmin = async (req,res) =>{
+
+    try{
+
+        if(!req.body) return res.status(401).json({error: 'Missing request body'});
+        const {setid} = req.body;
+        const ah = req.headers['authorization'];
+        if(!ah) return res.status(401).json({error: 'Missing auhorization header'});
+        if(!ah.startsWith('Bearer ')) return res.status(401).json({error:'Invalid token format'});
+        if(!setid) return res.status(401).json({error: 'Missing user id'});
+        const token = ah.split(" ")[1];
+        const decoded = vertok(token);
+        if(!decoded) return res.status(401).json({error: 'Invalid token'});
+        const adm = decoded?.id?.admin;
+        if(!adm || !adm.hauth || !(adm.user_role === 'admin' || 'iadmin')) return res.status(401).json({error: 'This token likely been smuggled'});
+        const adminid = adm.id;
+        const getad = await User.findByPk(adminid);
+        if(!getad) return res.status(401).json({error: 'No such admin'});
+        const crtb = `${getad.fname} ${getad.lname}`;
+        const user = await User.findByPk(setid);
+        if(!user) return res.status(404).json({error:'The requested user does not exist'});
+        if(!user.is_verified) return res.status(401).json({error:'Unverified user cannot be admin please verify email first'});
+        const pr = 'assign';
+        if(user.user_role  === 'iadmin' || user.user_role === 'admin' ) return res.status(201).json({error:'User already is an admin'});
+        if(user.user_role !== pr) return res.status(401).json({error:'User not eligible for iadmin status'});
+        const email = user.email;
+        const asr = 'iadmin';
+        await User.update({user_role: asr},{where: {email}});
+
+        const upad = await User.findOne({where:{email}});
+
+
+        const facid = upad.facility_id;
+        const fac = await Facility.findByPk(facid);
+        const facname = fac?.fac_name || 'Unknown';
+        const factype = fac?.fac_type || 'Unknown';
+    
+        const adminpay = { message: `Congratulations  ${upad.fname} is now an Admin`,
+                        admin:{
+                            id: user.id,
+                            fname: upad.fname,
+                            lname: upad.lname,
+                            email: upad.email,
+                            role: upad.user_role,
+                            age: upad.age,
+                            verified: upad.is_verified,
+                            facility: facname,
+                            facility_type: factype,
+                            hauth: false,
+                            created_by: crtb,
+                            joined: upad.created_at,
+                            admin_since: upad.updated_at
+                        }};
+
+
+const subject = "Admin Promotion";                     
+
+const template = `<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Afyalink Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Congratulations. You are now an Admin</h2>
+    <p class="value"><span class="label">Name:</span> ${upad.fname} ${upad.lname}</p>
+    <p class="value"><span class="label">Email:</span> ${upad.email}</p>
+    <p class="value"><span class="label">Role:</span> ${upad.user_role}</p>
+    <p class="value"><span class="label">Age:</span> ${upad.age}</p>
+    <p class="value"><span class="label">Verified:</span> ${upad.is_verified} </p>
+    <p class="value"><span class="label">Facility:</span> ${facname}</p>
+    <p class="value"><span class="label">Facility Type:</span> ${factype} </p>
+    <p class="value"><span class="label">Joined:</span> ${upad.created_at}</p>
+    <p class="value"><span class="label">Creater By:</span> ${crtb}</p>
+    <p class="value"><span class="label">Admin since:</span> ${upad.updated_at}</p>
+
+    <div class="footer">
+      <i>This is an automated message. Please do not reply directly to this email.</i>
+    </div>
+  </div>
+</body>
+</html>`;
+
+
+await genmail(upad.email,subject,template);
+
+                        res.status(201).json({
+                            adminpay,
+
+                        });
+    
+        
+}
+
+    catch(err)
+    {
+
+        console.log(err.message);
+        res.status(500).json({error: 'Could not create admin'});
+    }
+
+
+
+
+};
+
+
+
+//admin/delete
+//token from /admin/auth
+
+
+
+export const deladmin = async (req,res) =>{
+
+
+try{
+
+    if(!req.body) return res.status(401).json({error: 'Missing request body'});
+
+    const{delid,delt} = req.body; //use yes or no kwa delt coz bool inaleta shida
+    const ah = req.headers['authorization'];
+    if(!ah) return res.status(401).json({error: 'Missing request body'});
+    if(!ah.startsWith('Bearer ')) return res.status(401).json({error:'Invalid token format'});
+    if(!delid ) return res.status(401).json({error: 'Missing admin id '});
+    const ch = await User.findByPk(delid);
+    if(!ch) return res.status(404).json({error: 'User not found'});
+    if(ch.user_role === 'admin') return res.status(401).json({error: 'You will be reported for doing this'});
+
+    const token = ah.split(" ")[1];
+
+    const decoded = vertok(token);
+
+    if(!decoded) return res.status.json({error: 'Invalid  or expired token'});
+    const adm = decoded?.id?.admin;
+    if(!adm || !adm.hauth) return res.status(401).json({error: 'This token likely been smuggled'});
+
+
+    //admin deleting iadmins
+    if(adm.role === 'admin'){
+      if(!delt) return res.status(401).json({error: 'Please specify the delt option'});
+
+      //confirm if that mf exists in db first.
+      const adminid = adm.id;
+      const valad = await User.findByPk(adminid);
+      if(!valad) return res.status(401).json({error: 'Admin does not exist.'});
+      const demoter = `${valad.fname} ${valad.lname}`;
+      //console.log(adm.role);
+      //console.log(valad.user_role);
+      if(adm.role !== valad.user_role) return res.status(401).json({error: 'Unauthorized action detected'});
+      if(valad.id === parseInt(delid)) return res.status(401).json({error: 'Action not permitted and will be reported'});
+      const adtdl = await User.findByPk(delid);
+      if(!adtdl) return res.status(404).json({error: 'Could delete admin beacuse he does not exist'});
+      console.log(adtdl.user_role);
+      if(adtdl.user_role !== 'iadmin') return res.status(401).json({error: 'Unathorized action detected'});
+      const email = adtdl.email;
+
+      if(delt === 'yes'){
+        //delete admin permaently and notify by email
+
+        const userdlt2 = await User.findOne({where:{email}});
+        if(!userdlt2) return res.status(401).json({error:'Smth went wrong with the db'});
+
+        const demoter11 = `${valad.fname} ${valad.lname}`; //wtf is this line doing and yet demoter  exists
+        const facid = userdlt2.facility_id;
+        const fac = await Facility.findByPk(facid);
+        const facname = fac?.fac_name || 'Unknown';
+        const factype = fac?.fac_type || 'Unknown';
+        const delminpay2 = { message: `Congratulations  ${userdlt2.fname} has been deleted and so is no longer an Admin`,
+        user_details2:{
+            id: userdlt2.id,
+            fname: userdlt2.fname,
+            lname: userdlt2.lname,
+            email: userdlt2.email,
+            role: userdlt2.user_role,
+            age: userdlt2.age,
+            verified: userdlt2.is_verified,
+            facility: facname,
+            facility_type: factype,
+            hauth: false,
+            deleted_by: demoter11,
+            joined: userdlt2.created_at,
+            admin_since: userdlt2.updated_at
+        }};
+
+
+
+        await  User.destroy({where:{email}});
+        res.status(201).json({
+          delminpay2
+        });
+
+
+        const wn = `${userdlt2.fname} ${userdlt2.lname}`;
+
+
+
+
+
+        //notify by email
+
+
+      const dels = 'You are no longer an Afyalink admin';
+      const template1 =`<html>
+      <head>
+        <titile> You are now a regular user</title>
+         <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+      </head>
+      <body>
+        <div class='container'>
+      <p>Dear ${wn};</p><br>
+      <p>${demoter11} removed you from admin position </p><b>
+        <div class="footer">
+      <i>This is an automated message. Please do not reply directly to this email.</i>
+    </div>
+  </div>
+
+      </body>
+
+      </html>`;
+
+      await genmail(email,dels,template1);
+
+
+      }
+
+     else  if(delt === 'no')
+      {
+        //only demote him from admin and back to assign and also notify via email
+
+        const newr = 'assign';
+
+        await User.update({user_role: newr},{where: {email} });
+
+        //make payload for demotion
+
+        const userdlt = await User.findOne({where:{email}});
+        if(!userdlt) return res.status(401).json({error:'Smth went wrong with the db'});
+        
+        const facid = userdlt.facility_id;
+        const fac = await Facility.findByPk(facid);
+        const facname = fac?.fac_name || 'Unknown';
+        const factype = fac?.fac_type || 'Unknown';
+        const delminpay = { message: `Congratulations  ${userdlt.fname} is no longer  an Admin`,
+        user_details:{
+            id: userdlt.id,
+            fname: userdlt.fname,
+            lname: userdlt.lname,
+            email: userdlt.email,
+            role: userdlt.user_role,
+            age: userdlt.age,
+            verified: userdlt.is_verified,
+            facility: facname,
+            facility_type: factype,
+            hauth: false,
+            demoted_by: demoter,
+            joined: userdlt.created_at,
+            admin_since: userdlt.updated_at
+        }};
+
+
+
+        res.status(200).json({
+          delminpay
+        });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //send him not by email..
+
+        const subj = 'Demotion from admin position';
+        const template = `<html>
+        <head>
+          <title>Your admin priviledges have been revokead</title>
+           <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+      </head>
+      <body>
+        <div class='container'>
+      <p> Dear ${userdlt.fname};</P><br>
+      <p>You have been demoted from admin to a regular user</p><br>
+      <div class="footer">
+      <i>This is an automated message. Please do not reply directly to this email.</i>
+    </div>
+  </div>
+      </body>
+
+        
+        </html>`;
+
+
+        await genmail(email,subj,template);
+
+
+
+
+
+
+
+
+
+
+      }
+
+
+
+    }
+
+
+
+
+    //iadmin self deletion
+    if(adm.role === 'iadmin') {
+
+      const iadminid = adm.id;
+
+      //check if iadmin exists
+      const cheia = await User.findByPk(iadminid);
+    //  console.log(cheia.id);
+      //console.log(delid);
+      if(!cheia) return res.status(404).json({error: 'No such admin'});
+
+      if(cheia.user_role === 'assign') return res.status(200).json({error: 'user is not an admin'});
+      if(cheia.user_role !== 'iadmin') return res.status(401).json({error:'Unauthorized action detected'});
+      
+      const email = cheia.email;
+      if(cheia.id !== parseInt(delid)) return res.status(401).json({Alert: 'Nice try budy'});
+
+
+
+
+
+      if(delt === 'yes')
+      {
+        //delete that mf 
+
+
+        const userdlt3 = await User.findOne({where:{email}});
+        if(!userdlt3) return res.status(401).json({error:'Smth went wrong with the db'});
+        const demoter = `${userdlt3.fname} ${userdlt3.lname}`;
+
+
+        const facid = userdlt3.facility_id;
+        const fac = await Facility.findByPk(facid);
+        const facname = fac?.fac_name || 'Unknown';
+        const factype = fac?.fac_type || 'Unknown';
+        const delminpay2 = { message: `Congratulations  ${userdlt3.fname} has been deleted and so is no longer an Admin`,
+        user_details2:{
+            id: userdlt3.id,
+            fname: userdlt3.fname,
+            lname: userdlt3.lname,
+            email: userdlt3.email,
+            prev_role: userdlt3.user_role,
+            age: userdlt3.age,
+            verified: userdlt3.is_verified,
+            facility: facname,
+            facility_type: factype,
+            hauth: false,
+            deleted_by: demoter,
+            joined: userdlt3.created_at,
+            admin_since: userdlt3.updated_at
+        }};
+
+
+
+        await  User.destroy({where:{email}});
+        res.status(201).json({
+          delminpay2
+        });
+
+
+
+
+        //notify with email
+
+        const ds = 'You are No longer an Afyalink admin';
+        const temp =`<html>
+        <head>
+          <title>You are no longer an afyalink admin</title>
+           <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+      </head>
+      <body>
+        <div class="container">
+        <p>Dear ${userdlt3.fname} ${userdlt3.lname} </p><br>
+        <p>Due to some reasons you decided to leave admin position</p><br>
+
+        <p>On afyalink</p><br>
+        <div class="footer">
+      <i>This is an automated message. Please do not reply directly to this email.</i>
+    </div>
+  </div>
+      </body>
+        </html>`;
+
+        await genmail(email,ds,temp);
+
+
+      }
+
+      else if(delt === 'no')
+      {
+
+        //demote and not delete
+
+        const neir = 'assign';
+
+      
+
+       await User.update({user_role: neir},{where:{email}});
+
+
+       const userdlt1 = await User.findOne({where:{email}});
+
+        if(!userdlt1) return res.status(401).json({error:'something went wrong'});
+        const demoter1 = `${userdlt1.fname} ${userdlt1.lname}`;
+
+       const facid = userdlt1.facility_id;
+        const fac = await Facility.findByPk(facid);
+        const facname = fac?.fac_name || 'Unknown';
+        const factype = fac?.fac_type || 'Unknown';
+        const delminpay1 = { message: `Congratulations  ${userdlt1.fname} is no longer  an Admin`,
+        user_details:{
+            id: userdlt1.id,
+            fname: userdlt1.fname,
+            lname: userdlt1.lname,
+            email: userdlt1.email,
+            role: userdlt1.user_role,
+            age: userdlt1.age,
+            verified: userdlt1.is_verified,
+            facility: facname,
+            facility_type: factype,
+            hauth: false,
+            demoted_by: demoter1,
+            joined: userdlt1.created_at,
+            admin_since: userdlt1.updated_at
+        }};
+
+
+
+        res.status(200).json({
+          delminpay1
+        })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       //notify via email 
+
+       const subto = 'Demotion from admin';
+       const demt = `<html>
+       <head>
+        <title>You are no longer admin</title>
+         <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+      </head>
+      <body>
+        <div class="container">
+        <p>Dear ${userdlt1.fname} ${userdlt1.lname};</p><br>
+        <p>Due to some reasons you have beem demoted from admin</p><br>
+        <p>You are just a regular user now</p><br>
+        <div class="footer">
+      <i>This is an automated message. Please do not reply directly to this email.</i>
+    </div>
+  </div>
+      </body>
+
+       </html>`;
+
+       await genmail(email,subto,demt);
+
+
+      }
+
+
+
+
+
+
+
+    }
+
+
+
+
+}
+
+
+
+
+catch (err){
+
+  console.log(err.message);
+  res.status(500).json({error:'Could not make admin changes'});
+
+}
+
+};
+
+
+//use token from admin auth
+export const approveref = async(req,res) =>{
+
+try{
+
+  if(!req.body) return res.status(401).json({error: 'Missing request body'});
+
+  const {refid} = req.body;
+
+  const ah = req.headers['authorization'];
+  if(!ah) return res.status(403).json({error: 'Miissing auth token'});
+  if(!ah.startsWith('Bearer ')) return res.status(403).json({error: 'Invalid token format'});
+  if(!refid) return res.status(403).json({error: 'Missing refid in request body'});
+
+  const token = ah.split(" ")[1];
+  const decoded = vertok(token);
+  if(!decoded) return res.status(403).json({error:'Invalido tokeno'});
+  const adm = decoded.id.admin;
+  const adid = adm.id;
+
+  if(!adm || !adm.hauth || !adm.verified) return res.status(403).json({error:'You cannot perform the action'});
+
+  //confirm if he still admin
+
+  const chea = await User.findByPk(adid);
+
+  if(!chea) return res.status(401).json({error:'You are not allowed to do that'});
+  const ched = chea.user_role;
+  const chedv = chea.is_verified;
+  if(!chedv || !(ched === 'admin' || ched === 'iadmin')) return res.status(403).json({error: 'You are not priviledged enough to perform that action'});
+
+  const man = await User.findByPk(refid);
+  if(!man) return res.status(404).json({error:'User not found'});
+  const prf = man.user_role;
+  const prv = man.is_verified;
+  const email = man.email;
+
+  if(prf !== 'refmanagertobe') return res.status(401).json({error: 'User not eligible for approval'});
+  if(prf === 'refmanager') return res.status(200).json({error:'User was already approved'});
+  if(!prv) return res.status(403).json({error:'Cannot approve an unverified user'});
+  const newr = 'refmanager';
+
+  await User.update({user_role:newr},{where:{email}});
+
+  //// respond acha me niende zido
+
+
+  const ner = await User.findOne({where:{email}});
+  const faid = ner.facility_id;
+  const fa = await Facility.findByPk(faid);
+  const fane = fa?.fac_name || "Unknown";
+  const fate = fa?.fac_type || "Unknown";
+
+  const refp = { message: `Congratulations, you approved ${ner.fname} ${ner.lname} as a referral manager`,
+                refmanager:{
+                  name:`${ner.fname} ${ner.lname}`,
+                  age: ner.age,
+                  approved_by:`${chea.fname} ${chea.lname}`,
+                  approved_at: ner.updated_at,
+                  facility: fane,
+                  facility_type: fate
+
+                } 
+
+  };
+
+
+
+  res.status(201).json({
+    refp
+  });
+
+
+
+
+
+
+  const refsu = `Approval as Referral Manager`
+  
+
+  const retemp = `<html>
+
+  <head>
+    <titile>You have been approved as a referral manager</title>
+</head>
+<body>
+  <p>Dear ${ner.fname};</p>
+  <p>You have been approved as a referral manager and can now assume that role</p>
+</body>
+  
+  
+  </html>`;
+
+
+
+  await genmail(email,refsu,retemp);
+
+
+
+
+
+
+
+
+
+
+
+  //send email that he is a ref manager now
+
+ 
+
+
+
 
 
 
 
 
 }
+
+
+catch(err)
+{
+
+
+
+
+
+}
+
+
+
+
+
+
+
+};
+
+
+
+
+

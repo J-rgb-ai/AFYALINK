@@ -82,11 +82,15 @@ import bcrypt from 'bcrypt';
 import User from '../config/db/orm/ormmodels/user.js';
 import gentok from '../utils/jwt/genjwt.js';
 import Facility from '../config/db/orm/ormmodels/facility.js';
+import Doctor from '../config/db/orm/ormmodels/doctors.js';
 import vertok from '../utils/jwt/verjwt.js';
 import genotp from '../utils/otp/genotp.js';
 import verotp from '../utils/otp/verotp.js';
 import { Fn } from 'sequelize/lib/utils';
 import { sendotpmail,sendregmail,respasmail } from '../utils/mail/mailer.js';
+import redis from '../config/redis/redis.js';
+import Patient from '../config/db/orm/ormmodels/patients.js';
+import userrouter from '../routes/authRoutes.js';
 
 
 
@@ -98,7 +102,7 @@ const emailreg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
 function capfast(str){
-  if(typeof str !== 'string' || str.length === 0) return 'Fuck you';
+  if(typeof str !== 'string' || str.length === 0) return ' ';
 
   return str.charAt(0).toLocaleUpperCase() + str.slice(1);
 
@@ -130,7 +134,7 @@ export const signup = async (req, res) => {
 
     if(!valemal) return res.status(400).json({error: 'Invalid email format'});
 
-    if(user_role === 'admin') return res.status(401).json({warning: 'You have no such privileges'});
+    if(user_role === 'admin' || user_role === 'iadmin') return res.status(401).json({warning: 'You have no such privileges'});
 
 
 
@@ -152,6 +156,138 @@ const age =
       return res.status(409).json({ error: `Sorry User with those details already exists` });
     }
 
+    //why this block not executing..idk
+    const ext = await User.findOne({where:{phone}});
+    if(ext) return res.status(409).json({error:'Phone no already registered before'});
+
+
+    //yeah now we look at it oh yeah
+
+    if( user_role === 'refmanager' || user_role === 'refmanagertobe') {
+
+      //do refmanager shii
+
+      const password_hash = await bcrypt.hash(password,10);
+      const user_role = 'refmanagertobe';
+
+      const user = await User.create({
+        fname,
+        lname,
+        email,
+        phone,
+        password_hash,
+        user_role,
+        gender,
+        dob,
+        age,
+        facility_id
+
+      });
+
+      if(!user) throw new Error('Could not create user');
+      const facid = user.facility_id;
+    const fac = await Facility.findByPk(facid);
+
+    const facname = fac?.fac_name || 'Unknown';
+    const factype = fac?.fac_type || 'Unknown';
+
+    const token = 'Bearer '+ gentok(user.id, user.email,user.phone,user.user_role);
+    const otp = await genotp(user.id);
+    console.log(otp); //get rid of it in production usisahau we mzee
+    await sendotpmail(user.email,otp);
+
+
+    // Respond
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: {
+        id: user.id,
+        fname: user.fname,
+        lname: user.lname,
+        email: user.email,
+        role: user.user_role,
+        age: user.age,
+        verified: user.is_verified,
+        facility: facname,
+        facility_type: factype,
+        joined: user.created_at
+      },
+      token
+    });
+
+  
+
+    const regname = capfast(user.fname) + ' ' + capfast(user.lname);
+   // const regrole = capfast(user.user_role);
+    const regstat = capfast(user.is_verified) + " " + 'Please verify email';
+   const regfac = capfast(factype);
+const template = `<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Afyalink Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      margin-bottom: 10px;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Congratulations for registering with  afyalink today</h2>
+    <p class="value"><span class="label">Name:</span> ${regname}</p>
+    <p class="value"><span class="label">Email:</span> ${user.email}</p>
+    <p class="value"><span class="label">Role:</span> Requested for Referral manager</p>
+    <p class="value"><span class="label">Age:</span> ${user.age}</p>
+    <p class="value"><span class="label">Verified:</span> ${regstat} </p>
+    <p class="value"><span class="label">Facility:</span> ${facname}</p>
+    <p class="value"><span class="label">Facility Type:</span> ${regfac} </p>
+    <p class="value"><span class="label">Joined:</span> ${user.created_at}</p>
+
+    <div class="footer">
+      Thank you for registering with Afyalink. If you have any questions, please hesitate to reach out.
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+
+///congrats to user for registering
+await sendregmail(user.email,template);
+
+
+
+    }
+
+  else   if(user_role !==  'refmanager' || user_role !== 'refmanagertobe')
+{
    
     // Hash password
     const password_hash = await bcrypt.hash(password, 10);
@@ -251,7 +387,7 @@ const template = `<html>
 </head>
 <body>
   <div class="container">
-    <h2>Congragulations for registering with  afyalink today</h2>
+    <h2>Congratulations for registering with  afyalink today</h2>
     <p class="value"><span class="label">Name:</span> ${regname}</p>
     <p class="value"><span class="label">Email:</span> ${user.email}</p>
     <p class="value"><span class="label">Role:</span> ${regrole}</p>
@@ -273,7 +409,7 @@ const template = `<html>
 ///congrats to user for registering
 await sendregmail(user.email,template);
 
-
+  }
 
   } catch (err) {
     console.error('Signup error:', err); // 👈 this will show the real issue i mean it should but it may not still 
@@ -303,18 +439,23 @@ try{
   const id = decoded.id;
   const email = decoded.email;
 
+
   const user = await User.findByPk(id);
   if(!user) return res.status(401).json({error: 'Something went wrong with the db'})
+    if(email !== user.email) return res.status(403).json({error:'Bad boy'}) ;
     if(user.is_verified) return res.status(200).json({heads: 'Email had already been verified'});
     if(user.is_verified === false){
 
-        const stordo = await verotp(user.id);
-        if(stordo !== otp) return res.json({error: 'Invalid or expired otp'});
+      //const ttl = await redis.ttl(`otp:${user.id}`);
 
+
+
+        const stordo = await verotp(user.id);
+        if(stordo !== otp) return res.status(401).json({error:'Invalid otp'});
         await User.update({is_verified: true},{where: {email}});
         res.status(201).json({success: 'Email verified succesful'}); //if only i was a good dev man...am not even trying
         //like wtf is this trashy cide man..I expected much more from you
-
+      
     }
 
 }
@@ -330,6 +471,8 @@ catch(err)
 
 
 };
+
+
 
 
 
@@ -363,7 +506,7 @@ const facname = fac?.fac_name || 'Unknown';
 const factype = fac?.fac_type || 'Unknown';
 
 
-if(user.user_role === 'admin') {
+if(user.user_role === 'admin' || user.user_role === 'iadmin') {
 
   //token admin atapewa uku ataenda nayo admin/auth
 
@@ -384,6 +527,8 @@ if(user.user_role === 'admin') {
 if(!user.is_verified){
 
   const token = 'Bearer ' + gentok(user.id,user.email || user.phone);
+  const otp = await genotp(user.id);
+  await sendotpmail(user.email,otp);
   return res.status(401).json({
     Message: "please verify user first",
     verfificationToken: token
@@ -408,6 +553,201 @@ return res.status(200).json({
   
 
 }
+else if (user.role === 'patient' && user.is_verified)
+{
+const pid = user.id;
+  const np1 = await Patient.findOne({where:{user_id:pid}});
+  if(!np1) {
+    const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
+    const facid = user.facility_id;
+
+const fac = await Facility.findByPk(facid);
+const facname = fac?.fac_name || 'Unknown';
+const factype = fac?.fac_type || 'Unknown';
+
+
+  return  res.status(200).json({
+      message: 'Login succesful',
+      user:{
+        id: user.id,
+        fname: user.fname,
+        lname: user.lname,
+        email: user.email,
+        role: user.user_role,
+        age: user.age,
+        verified: user.is_verified,
+        facility: facname,
+        facility_type: factype,
+        joined: user.created_at
+      },
+      usertoken: token
+    
+    });
+
+  }  
+
+     const np2 = await Patient.findOne({where:{user_id:pid}});
+
+     if(!np2) return res.status(401).json({error:'User has not full submitted patient details'});
+
+
+     const papey = {
+      message: `Welcome ${user.fname} ${user.lname}`,
+      patient:{
+        id:np2.id,
+        userId:np2.user_id,
+        national_id: np2.national_id,
+        blood_type: np2.blood_type,
+        chronic_conditions:np2.chronic_conditions,
+        emergency_cont_name: np2.emergency_cont_name,
+        emergency_cont_phone: emergency_cont_phone,
+        is_insured: np2.is_insured,
+        insurance_type: np2.insurance_type
+
+      }
+     };
+
+
+
+     const patok = 'Bearer ' + papey;
+
+     res.status(200).json({
+      papey,
+      patient_token:patok
+     });
+
+
+}
+
+
+
+else if(user.user_role === 'doctor' && user.is_verified){
+
+
+  const did = user.id;
+
+  const nd1 = await Doctor.findOne({where:{user_id:did}});
+  if(!nd1) {
+    const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
+    const facid = user.facility_id;
+
+const fac = await Facility.findByPk(facid);
+const facname = fac?.fac_name || 'Unknown';
+const factype = fac?.fac_type || 'Unknown';
+
+
+  return  res.status(200).json({
+      message: 'Login succesful',
+      user:{
+        id: user.id,
+        fname: user.fname,
+        lname: user.lname,
+        email: user.email,
+        role: user.user_role,
+        age: user.age,
+        verified: user.is_verified,
+        facility: facname,
+        facility_type: factype,
+        joined: user.created_at
+      },
+      usertoken: token
+    
+    });
+
+  }  
+
+  const nd = await Doctor.findOne({where:{user_id:did}});
+  if(!nd) return res.status(403).json({error:'User is not a qualified or verified doctor'});
+
+
+
+
+  const docp = {
+    message:`welcome doctor ${user.fname}`,
+    doctor:{
+    name: `${user.fname} ${user.lname}`,
+    docid: nd.id,
+    userId: user.id,
+    age:user.age,
+    lic_no: nd.license_number,
+    is_spec: nd.is_specialist,  //do some corrections here later to avoid undefined
+    spec: nd.speciality,
+    qualf: nd.qualification,
+    role: user.user_role,
+    verified: user.is_verified,
+    experience: nd.years_experience,
+    consultant: nd.is_consultant,
+    created: user.created_at,
+    doc_since: nd.created_at,
+
+    }
+};
+
+
+const doctok = 'Bearer ' + gentok(docp);
+
+res.status(200).json({
+  docp,
+  doctor_token: doctok
+})
+
+}
+else if(user.user_role === 'refmanager'){
+
+
+  const refpay = { message: `Welcome Referral Manager  ${user.fname}`,
+  refmanager:{
+      id: user.id,
+      fname: user.fname,
+      lname: user.lname,
+      email: user.email,
+      role: user.user_role,
+      age: user.age,
+      verified: user.is_verified,
+      facility: facname,
+      facility_type: factype,
+      joined: user.created_at
+  }};
+
+
+  
+
+if(!user.is_verified){
+
+const token = 'Bearer ' + gentok(user.id,user.email || user.phone);
+
+ const otp = await genotp(user.id);
+ console.log(`The otp  ${otp} was generated for referral manager`);
+
+await sendotpmail(user.email,otp);
+return res.status(401).json({
+Message: "please verify user first",
+verfificationToken: token
+});
+}
+
+const reftok = 'Bearer ' +  gentok(refpay);
+//const otp = await  genotp(user.id);
+
+//TODO add a subject as param in send otpmail func..au sio
+//await sendotpmail(user.email,otp);
+
+
+return res.status(200).json({
+refpay,
+reftoken: reftok
+
+});
+
+
+
+
+
+
+
+
+
+}
 
 
 
@@ -415,6 +755,18 @@ return res.status(200).json({
 //get facilities ako ndani
 else {
 const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
+
+if(!user.is_verified){
+
+  const token = 'Bearer ' + gentok(user.id,user.email || user.phone);
+  
+  const otp = await genotp(user.id);
+  await sendotpmail(user.email,otp);
+  return res.status(401).json({
+  Message: "please verify user first",
+  verfificationToken: token
+  });
+  }
 
 
 
@@ -444,7 +796,7 @@ res.status(200).json({
   }
   catch(err){
 
-    res.status(500).json({error: 'Failed to login user'});
+    res.status(500).json({error: 'Failed to login user. Try again later'});
     console.log(err.message);
 
 
@@ -701,7 +1053,7 @@ export const resetpass = async (req,res) =>{
     <h2>🔐 Password Changed Successfully</h2>
     <p class="message">
       Hello,<br><br>
-      Dear <strong>${usname}</strong><b>
+      Dear <strong>${usname}</strong><br>
       Your Afyalink account password has been updated successfully.<br>
       You can now log in with your new password.<br>
        If you did not initiate this change, please contact our support team immediately.
