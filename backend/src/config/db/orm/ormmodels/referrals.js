@@ -56,7 +56,8 @@ const Referral = sequelize.define('Referral', {
     type: DataTypes.STRING(100)
   },
   status: {
-    type: DataTypes.ENUM('sent', 'received', 'accepted', 'completed', 'rejected')
+    type: DataTypes.ENUM('sent', 'received', 'accepted', 'completed', 'rejected','approved','tobeapproved'),
+    defaultValue: 'tobeapproved'
   },
   notes: {
     type: DataTypes.TEXT
@@ -80,13 +81,13 @@ const Referral = sequelize.define('Referral', {
 
 Referral.belongsTo(Patient, { foreignKey: 'patient_id' });
 Referral.belongsTo(User, { foreignKey: 'reffering_user_id', as: 'referrer' });
-Referral.belongsTo(Facility, { foreignKey: 'reffering_facility_id', as: 'fromFacility' });
-Referral.belongsTo(Facility, { foreignKey: 'receiving_facility_id', as: 'toFacility' });
+Referral.belongsTo(Facility, { foreignKey: 'reffering_facility_id', as: 'facilityfrom' });
+Referral.belongsTo(Facility, { foreignKey: 'receiving_facility_id', as: 'facilityto' });
 
 Patient.hasMany(Referral, { foreignKey: 'patient_id' });
 User.hasMany(Referral, { foreignKey: 'reffering_user_id', as: 'referralsMade' });
-Facility.hasMany(Referral, { foreignKey: 'reffering_facility_id', as: 'outgoingReferrals' });
-Facility.hasMany(Referral, { foreignKey: 'receiving_facility_id', as: 'incomingReferrals' });
+Facility.hasMany(Referral, { foreignKey: 'reffering_facility_id', as: 'facilityfrom' });
+Facility.hasMany(Referral, { foreignKey: 'receiving_facility_id', as: 'facilityto' });
 
 
 export default Referral;
