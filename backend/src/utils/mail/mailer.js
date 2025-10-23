@@ -25,7 +25,7 @@ export const sendotpmail = async(toemail,otp) =>{
         from: `"Afyalink" <${process.env.GMAIL}>`,
         to: toemail,
         subject: 'Your Afyalink otp',
-        html:`<p>Your OTP is <strong>${otp}</strong></p><p>This code will expire in 5 min and is for one time use only.<strong>  Even incorrect attempts are counted as times and code becomes invalid</strong></p>`
+        html:`<p>Your OTP is <strong>${otp}</strong></p><p> This code will expire in 5 min and is for one time use only.<strong>  Even incorrect attempts are counted as times and code becomes invalid</strong></p>`
 
     };
 
@@ -87,3 +87,24 @@ export const respasmail = async (toemail,template) =>{
 
 
 };
+
+
+export const genmail = async(toemail,sub,template) =>{
+
+    const mailoptions = {
+        from: `"Afyalink" <${process.env.GMAIL}>`,
+        to: toemail,
+        subject: sub,
+        html: template
+
+    };
+
+    try{
+        await transporter.sendMail(mailoptions);
+        console.log(`Dear ${toemail}  ${sub} `);
+    }
+    catch(err){
+        console.log(err.message);
+
+    }
+}
