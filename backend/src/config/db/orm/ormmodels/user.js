@@ -79,7 +79,7 @@ const User = sequelize.define('User', {
   tableName: 'users'
 });
 
-User.belongsTo(Facility, { foreignKey: 'facility_id' });
-Facility.hasMany(User, { foreignKey: 'facility_id' });
+User.belongsTo(Facility, { foreignKey: 'facility_id', as: 'fac'});
+Facility.hasMany(User, { foreignKey: 'facility_id', as: 'fac'});
 
 export default User;

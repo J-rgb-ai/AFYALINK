@@ -44,8 +44,8 @@ const ReferralNote = sequelize.define('ReferralNote', {
 });
 
 // Associations
-ReferralNote.belongsTo(Referral, { foreignKey: 'referral_id' });
-Referral.hasMany(ReferralNote, { foreignKey: 'referral_id' });
+ReferralNote.belongsTo(Referral, { foreignKey: 'referral_id', as: 'not'});
+Referral.hasMany(ReferralNote, { foreignKey: 'referral_id',  as: 'not'});
 
 ReferralNote.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
 User.hasMany(ReferralNote, { foreignKey: 'author_id' });

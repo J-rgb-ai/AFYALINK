@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../sequalize.js';
 import Patient from './patients.js';
 import User from './user.js';
-import Facility from './facility.js';
+import Facility from './facility.js'
 
 const Referral = sequelize.define('Referral', {
   id: {
@@ -56,11 +56,26 @@ const Referral = sequelize.define('Referral', {
     type: DataTypes.STRING(100)
   },
   status: {
-    type: DataTypes.ENUM('sent', 'received', 'accepted', 'completed', 'rejected','approved','tobeapproved'),
+    type: DataTypes.ENUM('processing', 'accepted', 'completed', 'rejected','approved','tobeapproved'),
     defaultValue: 'tobeapproved'
   },
   notes: {
     type: DataTypes.TEXT
+  },
+  req_date:{
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  need_date:{
+    type: DataTypes.DATE
+
+  },
+  sched_date:{
+    type: DataTypes.DATE
+  },
+  visit_id:{
+    type: DataTypes.INTEGER,
+    unique: true
   },
   created_at: {
     type: DataTypes.DATE,
@@ -79,15 +94,18 @@ const Referral = sequelize.define('Referral', {
 
 //asociates
 
-Referral.belongsTo(Patient, { foreignKey: 'patient_id' });
+Referral.belongsTo(Patient, { foreignKey: 'patient_id' , as: 'patient'});
 Referral.belongsTo(User, { foreignKey: 'reffering_user_id', as: 'referrer' });
 Referral.belongsTo(Facility, { foreignKey: 'reffering_facility_id', as: 'facilityfrom' });
 Referral.belongsTo(Facility, { foreignKey: 'receiving_facility_id', as: 'facilityto' });
+//Referral.belongsTo(Visit,{foreignKey: 'visit_id', as: 'refvisit'});
 
-Patient.hasMany(Referral, { foreignKey: 'patient_id' });
+
+Patient.hasMany(Referral, { foreignKey: 'patient_id', as:'patient' });
 User.hasMany(Referral, { foreignKey: 'reffering_user_id', as: 'referralsMade' });
 Facility.hasMany(Referral, { foreignKey: 'reffering_facility_id', as: 'facilityfrom' });
 Facility.hasMany(Referral, { foreignKey: 'receiving_facility_id', as: 'facilityto' });
+//Referral.hasOne(Visit,{foreignKey: 'visit_id', as: 'refvisit'});
 
 
 export default Referral;

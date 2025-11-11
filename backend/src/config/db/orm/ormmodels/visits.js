@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../sequalize.js';
 import Patient from './patients.js';
 import Facility from './facility.js';
+import Referral from './referrals.js';
 import User from './user.js';
 
 const Visit = sequelize.define('Visit', {
@@ -49,6 +50,18 @@ const Visit = sequelize.define('Visit', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
+  referral_id:{
+    type: DataTypes.INTEGER,
+    references:{
+      model: Referral,
+      key: 'id'
+    }
+
+  },
+  infacility:{
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
   revisited_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
@@ -63,6 +76,8 @@ const Visit = sequelize.define('Visit', {
 // Associations
 Visit.belongsTo(Patient, { foreignKey: 'patient_id' });
 Patient.hasMany(Visit, { foreignKey: 'patient_id' });
+Visit.belongsTo(Referral,{foreignKey: 'referral_id'});
+Referral.hasOne(Visit,{foreignKey: 'referral_id'});
 
 Visit.belongsTo(Facility, { foreignKey: 'facility_id' });
 Facility.hasMany(Visit, { foreignKey: 'facility_id' });

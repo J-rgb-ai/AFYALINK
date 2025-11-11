@@ -54,7 +54,7 @@ const Nurse = sequelize.define('Nurse', {
 });
 
 // Associations
-Nurse.belongsTo(User, { foreignKey: 'user_id' });
-User.hasOne(Nurse, { foreignKey: 'user_id' });
+Nurse.belongsTo(User, { foreignKey: 'user_id', as: 'nursee' });
+User.hasOne(Nurse, { foreignKey: 'user_id', as: 'nursee' });
 
 export default Nurse;

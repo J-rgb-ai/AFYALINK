@@ -55,7 +55,7 @@ const Patient = sequelize.define('Patient', {
   tableName: 'patients'
 });
 
-Patient.belongsTo(User, { foreignKey: 'user_id' });
+Patient.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasOne(Patient, { foreignKey: 'user_id' });
 
 export default Patient;
