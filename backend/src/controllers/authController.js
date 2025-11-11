@@ -75,6 +75,9 @@ exports.signup = async (req, res) => {
 };
 **/
 
+
+//kila place iko na req.boy eka template msee akikosa kueka...TODO
+
 import express from 'express';
 import dotenv from 'dotenv';
 //import jsonwebtoken from 'jsonwebtoken';
@@ -91,6 +94,10 @@ import { sendotpmail,sendregmail,respasmail } from '../utils/mail/mailer.js';
 import redis from '../config/redis/redis.js';
 import Patient from '../config/db/orm/ormmodels/patients.js';
 import userrouter from '../routes/authRoutes.js';
+import Nurse from '../config/db/orm/ormmodels/nurse.js';
+import Surgeon from '../config/db/orm/ormmodels/surgeon.js';
+import Labtech from '../config/db/orm/ormmodels/labtechs.js';
+import { format } from 'morgan';
 
 
 
@@ -114,6 +121,26 @@ function capfast(str){
 
 export const signup = async (req, res) => {
   try {
+
+const fori = {
+  fname: "Linet",
+  lname: "atieno",
+  email: "linetatieno@gmail.com",
+  phone: "+254712345678",
+  password: "SecurePass@2025",
+  user_role: "labtech",
+  gender: "female",
+  dob: "1992-08-15",
+  facility_id: 7
+};
+
+
+if(!req.body) return res.status(403).json({error: 'Missing request body', format: fori});
+
+
+
+
+
     const {
       fname,
       lname,
@@ -128,7 +155,7 @@ export const signup = async (req, res) => {
 
     // Basic validation
     if (!fname || !lname || !email || !password || !phone || !dob || !gender) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields', format: fori });
     }
     const valemal = emailreg.test(email);
 
@@ -437,6 +464,7 @@ try{
   if(!decoded) return res.status(401).json({error: 'Invalid or expired token'});
 
   const id = decoded.id;
+  //console.log(id);
   const email = decoded.email;
 
 
@@ -481,9 +509,16 @@ catch(err)
 export const login = async (req,res) =>{
 
   try{
-if(!req.body) return res.status(401).json({error: 'Missing request body'});
+
+const fori = {
+  email: 'lonelyking@gmail.com',
+  password: 'Lockedin34@'
+};
+
+
+if(!req.body) return res.status(400).json({error: 'Missing request body', format: fori});
   const {email,phone,password} = req.body;
-if(!password || !(email || phone) ) return  res.status(401).json({error: 'Please fill in the necessary details'}); 
+if(!password || !(email || phone) ) return  res.status(422).json({error: 'Please fill in the necessary details', format: fori}); 
 
 const checkm = emailreg.test(email);
 
@@ -553,6 +588,7 @@ return res.status(200).json({
   
 
 }
+
 else if (user.role === 'patient' && user.is_verified)
 {
 const pid = user.id;
@@ -618,6 +654,133 @@ const factype = fac?.fac_type || 'Unknown';
 
 
 }
+else if(user.role === 'labtech' && user.is_verified)
+{
+//do labtech shii over here 
+
+const lid = user.id;
+const lbs = await Labtech.findOne({where:{user_id:lid}});
+if(!lbs){
+
+  const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
+    const facid = user.facility_id;
+
+const fac = await Facility.findByPk(facid);
+const facname = fac?.fac_name || 'Unknown';
+const factype = fac?.fac_type || 'Unknown';
+
+
+  return  res.status(200).json({
+      message: 'Login succesful',
+      user:{
+        id: user.id,
+        fname: user.fname,
+        lname: user.lname,
+        email: user.email,
+        role: user.user_role,
+        age: user.age,
+        verified: user.is_verified,
+        facility: facname,
+        facility_type: factype,
+        joined: user.created_at
+      },
+      usertoken: token
+    
+    });
+
+
+}
+
+if(lbs){
+
+
+
+const labtp = {
+        message: `Welcome Labtech ${user.fname} ${user.lname}`,
+        labtech:{
+            userId: user.id,
+            labtId: lbs.id,
+            name: user.fname + ' ' + user.lname,
+            verified: user.is_verified,
+            license_no: lbs.license_no,
+            speciality: lbs?.speciality || 'None',
+            years_experience: lbs.years_experience,
+            facility: `${fac?.fac_name || 'Unknown'}  (${fac?.fac_type || ' also Unknown '})`,
+            submitted: lbs.created_at
+        }
+    };
+
+    const labt = 'Bearer ' + gentok(labtp);
+
+
+    return res.status(200).json({labtp, labtech_token: labt});
+
+}
+
+
+}
+
+
+
+
+else if(user.role === 'nurse' && user.is_verified)
+{
+
+const nid = user.id;
+const n1 = await Nurse.findOne({where:{user_id:nid}});
+if(!n1) {
+  const token = 'Bearer ' + gentok(user.id,user.email,user.phone);
+  const facid = user.facility_id;
+  const fac = await Facility.findByPk(facid);
+const facname = fac?.fac_name || 'Unknown';
+const factype = fac?.fac_type || 'Unknown';
+
+
+  return  res.status(200).json({
+      message: 'Login succesful',
+      user:{
+        id: user.id,
+        fname: user.fname,
+        lname: user.lname,
+        email: user.email,
+        role: user.user_role,
+        age: user.age,
+        verified: user.is_verified,
+        facility: facname,
+        facility_type: factype,
+        joined: user.created_at
+      },
+      usertoken: token
+    
+    });
+
+}
+
+const nursep = {
+  message: `Welcome Nurse ${user.fname} ${user.lname}`,
+  nurse:{
+      id: user.id,
+      name: `${user.fname} ${user.lname}`,
+      license_number: n1.license_number,
+      cadre: n1.cadre,
+      qualification: n1.qualification,
+      experience: n1.years_experience,
+      role: user.user_role,
+      specialist: n1?.is_specialist || "Not a specialist",
+      speciality: n1?.speciality || "Not specialized in any field",
+      verified: user.is_verified,
+      verified_at: n1.created_at
+       }
+};
+
+
+const nt = 'Bearer ' + gentok(nursep);
+
+return res.status(200).json({nursep,nurse_token: nt});
+
+
+
+}
 
 
 
@@ -656,10 +819,45 @@ const factype = fac?.fac_type || 'Unknown';
 
   }  
 
+  else{
+
   const nd = await Doctor.findOne({where:{user_id:did}});
   if(!nd) return res.status(403).json({error:'User is not a qualified or verified doctor'});
+  const lic = nd.license_number;
+  const saj = await Surgeon.findOne({where:{license_number:lic}});
+  if(saj){
 
 
+    const sgp = {
+      message: `Welcome back surgeon ${user.fname} ${user.lname}`,
+      surgeon:{
+          surgeonId: saj.id,
+          userId: user.id,
+          doctorId: nd.id,
+          name: `${user.fname} ${user.lname}`,
+          lic_no: saj.license_number,
+          verified: user.is_verified,
+          experience: saj.years_experience,
+          facilty: `${facname} (${factype})`,
+          is_consultant: saj?.is_consultant,
+          is_specialist: nd.is_specialist,
+          speciality: nd?.speciality || 'Not a specialist',
+          created_at: nd.created_at
+      }
+  };
+
+  const surt = 'Bearer ' + gentok(sqp);
+
+  return res.status(200).json({sgp, surgeon_token: surt});
+
+
+
+
+
+  }
+
+
+  else if(!saj) {
 
 
   const docp = {
@@ -686,10 +884,11 @@ const factype = fac?.fac_type || 'Unknown';
 
 const doctok = 'Bearer ' + gentok(docp);
 
-res.status(200).json({
+return res.status(200).json({
   docp,
   doctor_token: doctok
-})
+});
+}}
 
 }
 else if(user.user_role === 'refmanager'){
@@ -984,14 +1183,15 @@ export const resetpass = async (req,res) =>{
     //verify iyo token
 
     const decoded = vertok(token);
-
-
-
-    if(!decoded || !decoded.id) return res.status(401).json({error: 'Invalid or expired token'});
-
     const id = decoded.id;
     const email = decoded.email;
     const phone = decoded.phone;
+
+
+
+    if(!decoded || !decoded.id || !email ) return res.status(401).json({error: 'Invalid or expired token'});
+
+    
 
 
     //verify otp

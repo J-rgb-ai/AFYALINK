@@ -19,8 +19,10 @@ import LabResult from '../config/db/orm/ormmodels/labres.js';
 import Payment from '../config/db/orm/ormmodels/payments.js';
 import Department  from '../config/db/orm/ormmodels/departments.js';
 import AuditLog from '../config/db/orm/ormmodels/auditlog.js';
+import Blocked from '../config/db/orm/ormmodels/blockip.js';
 import { request } from 'express';
 import { genmail } from '../utils/mail/mailer.js';
+import { format } from 'morgan';
 
 
 
@@ -138,6 +140,8 @@ export const admindash = async (req,res) =>{
     const id = adm.id;
     const user = await User.findByPk(id);
     if(!user) return res.status(401).json({error: 'Admin not found'});
+    const adr = user.user_role;
+    if(!(user.user_role === 'admin' || user.user_role === 'iadmin') || !user.is_verified) return res.status(403).json({error:'You are not priviledged enough to view the dashboard'});
     const facid = user.facility_id;
     const fac = await Facility.findByPk(facid);
     const facname = fac?.fac_name || "unknown";
@@ -205,6 +209,7 @@ export const admindash = async (req,res) =>{
      const labres = await LabResult.findAll();
     const  allpay = await Payment.findAll();
     const alldep = await Department.findAll();
+    const allbl = await Blocked.findAll();
 
 
 //fetch from users where is refmanager or admin
@@ -237,7 +242,8 @@ console.log(allus);
             Visits: allvist,
             Labresults: labres,
             Payments: allpay,
-            BlockchainLogs: allb
+            BlockchainLogs: allb,
+            mutiny: allbl
          },
          Main:{
             RefManagers: {
@@ -300,12 +306,14 @@ export const adminlog = async(req,res) =>{
 
         const user = await User.findByPk(id);
         if(!user) return res.status(404).json({error: 'Admin not found'});
+        const adr = user.user_role;
+        if(!(adr === 'admin' || adr === 'iadmin')) return res.status(403).json({error:'You are not priviledged to view logs'});
         const facid = user.facility_id;
         const fac = await Facility.findByPk(facid);
         const facname = fac?.fac_name || "unknown";
         const factype = fac?.fac_type || "Unknown";
         const logs = await AuditLog.findAll();
-        console.log(logs);
+         console.log(logs);
 
         const adminpay =  { message: `Welcome to  admin Logs  Admin:  ${user.fname}`,
         admin:{
@@ -373,12 +381,12 @@ export const createadmin = async (req,res) =>{
 
     try{
 
-        if(!req.body) return res.status(401).json({error: 'Missing request body'});
+        if(!req.body) return res.status(401).json({error: 'Missing request body', format: '{"setid": "2"}'});
         const {setid} = req.body;
         const ah = req.headers['authorization'];
         if(!ah) return res.status(401).json({error: 'Missing auhorization header'});
         if(!ah.startsWith('Bearer ')) return res.status(401).json({error:'Invalid token format'});
-        if(!setid) return res.status(401).json({error: 'Missing user id'});
+        if(!setid) return res.status(401).json({error: 'specify user id in setid field', format: '{"setid": "2"}'});
         const token = ah.split(" ")[1];
         const decoded = vertok(token);
         if(!decoded) return res.status(401).json({error: 'Invalid token'});
@@ -391,6 +399,7 @@ export const createadmin = async (req,res) =>{
         const user = await User.findByPk(setid);
         if(!user) return res.status(404).json({error:'The requested user does not exist'});
         if(!user.is_verified) return res.status(401).json({error:'Unverified user cannot be admin please verify email first'});
+        if(getad.facility_id !== user.facility_id) return res.status(403).json({warn: 'Can only create admins in your facility'});
         const pr = 'assign';
         if(user.user_role  === 'iadmin' || user.user_role === 'admin' ) return res.status(201).json({error:'User already is an admin'});
         if(user.user_role !== pr) return res.status(401).json({error:'User not eligible for iadmin status'});
@@ -519,24 +528,30 @@ export const deladmin = async (req,res) =>{
 
 try{
 
-    if(!req.body) return res.status(401).json({error: 'Missing request body'});
+    if(!req.body) return res.status(400).json({error: 'Missing request body', format: '{delid: "2", delt: "yes/no"}'});
 
     const{delid,delt} = req.body; //use yes or no kwa delt coz bool inaleta shida
     const ah = req.headers['authorization'];
-    if(!ah) return res.status(401).json({error: 'Missing request body'});
+    if(!ah) return res.status(401).json({error: 'Missing auth body'});
     if(!ah.startsWith('Bearer ')) return res.status(401).json({error:'Invalid token format'});
-    if(!delid ) return res.status(401).json({error: 'Missing admin id '});
+    if(!delid ) return res.status(422).json({error: 'Missing admin id ',format: '{delid: "2", delt: "yes/no"}'});
     const ch = await User.findByPk(delid);
+    //console.log(ch);
     if(!ch) return res.status(404).json({error: 'User not found'});
+    //console.log(ch);
     if(ch.user_role === 'admin') return res.status(401).json({error: 'You will be reported for doing this'});
 
     const token = ah.split(" ")[1];
 
     const decoded = vertok(token);
 
-    if(!decoded) return res.status.json({error: 'Invalid  or expired token'});
+    if(!decoded) return res.status(403).json({error: 'Invalid  or expired token'});
     const adm = decoded?.id?.admin;
     if(!adm || !adm.hauth) return res.status(401).json({error: 'This token likely been smuggled'});
+    const adi = adm.id;
+    const vl = await User.findByPk(adi);
+    if(!adi || !(adi.user_role === 'admin' || adi.user_role === 'iadmin')) return res.status(404).json({error: 'Admin not found'});
+    if(vl.facility_id !== ch.facility_id) return res.status(403).json({warn: 'Please only work with individuals in your facility'});
 
 
     //admin deleting iadmins
@@ -1050,24 +1065,29 @@ catch (err){
 //use token from admin auth
 export const approveref = async(req,res) =>{
 
+
 try{
 
-  if(!req.body) return res.status(401).json({error: 'Missing request body'});
+  const fromat = {
+    refid: 3
+  };
+  if(!req.body) return res.status(400).json({error: 'Missing request body',format: fromat});
 
   const {refid} = req.body;
 
   const ah = req.headers['authorization'];
   if(!ah) return res.status(403).json({error: 'Miissing auth token'});
   if(!ah.startsWith('Bearer ')) return res.status(403).json({error: 'Invalid token format'});
-  if(!refid) return res.status(403).json({error: 'Missing refid in request body'});
+  if(!refid) return res.status(403).json({error: 'Missing refid in request body', format: fromat});
 
   const token = ah.split(" ")[1];
   const decoded = vertok(token);
+ // console.log(decoded);
   if(!decoded) return res.status(403).json({error:'Invalido tokeno'});
   const adm = decoded.id.admin;
   const adid = adm.id;
 
-  if(!adm || !adm.hauth || !adm.verified) return res.status(403).json({error:'You cannot perform the action'});
+  if(!adm || !adm.hauth || !adm.verified || !(adm.role === 'admin' || adm.role === 'iadmin')) return res.status(403).json({error:'You cannot perform the action'});
 
   //confirm if he still admin
 
@@ -1083,10 +1103,11 @@ try{
   const prf = man.user_role;
   const prv = man.is_verified;
   const email = man.email;
+  if(chea.facility_id !== man.facility_id) return res.status(403).json({warn:'Please select a member of your facility'});
 
   if(prf !== 'refmanagertobe') return res.status(401).json({error: 'User not eligible for approval'});
   if(prf === 'refmanager') return res.status(200).json({error:'User was already approved'});
-  if(!prv) return res.status(403).json({error:'Cannot approve an unverified user'});
+  if(!prv) return res.status(403).json({error:`Cannot approve ${man.fname} ${man.lname} because he / she has not yet verifed email`});
   const newr = 'refmanager';
 
   await User.update({user_role:newr},{where:{email}});
@@ -1171,6 +1192,8 @@ try{
 catch(err)
 {
 
+  console.log(err.message);
+  res.status(500).json({error:'Could not perform approval'});
 
 
 

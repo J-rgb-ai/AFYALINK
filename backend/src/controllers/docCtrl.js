@@ -31,6 +31,7 @@ import Facility from "../config/db/orm/ormmodels/facility.js";
 //addoc details   
 
 ///token from aadoc should be a same for a verified doctor and be used all over the doct routes
+//use token from login
 
 export const addoc = async(req,res) =>{
 try{
@@ -52,6 +53,7 @@ try{
     const confd = await Doctor.findOne({where:{userId}});
     if(confd) return res.status(200).json({error:'Seems like this doctor has already been verified'});
     const cond = await User.findByPk(user_id);
+    //if(cond.user_role !== 'doctor') return res.status(403).json({error:'Only doctors can perform this action'});
     if(!cond) return res.status(404).json({error: 'User not found'});
     if(cond.email !== email) return res.status(401).json({error:"Smuggled token you got there"});
     if(!cond.is_verified) return res.status(403).json({error:"please verify user first"});
@@ -186,8 +188,10 @@ export const docdash = async(req,res) =>
 
 
         const getr = await Referral.findOne({where:{reffering_user_id:docid}});
+        const getp = await Patient.findAll({attributes:{exclude:['password_hash']}});
+        const faci = await Facility.findAll();
         //console.log('r    '+getr);
-        if(!getr) return res.status(200).json({docp,Referrals:`Seems like you have no referrals Doctor ${conu.fname}`});
+        if(!getr) return res.status(200).json({docp, patients:{getp}, facilities: {faci},Referrals:`Seems like you have no referrals Doctor ${conu.fname}`});
 
         console.log('apa');
         const getrn = await ReferralNote.findOne({where:{author_id:usid}});
@@ -203,8 +207,8 @@ export const docdash = async(req,res) =>
         if(!getrefu) return res.status(404).json({error:'Patient is no longer a user'});
 
 
-        const getp = await Patient.findAll({attributes:{exclude:['password_hash']}});
-        const faci = await Facility.findAll();
+        
+       
 
 
         const acrefs = await Referral.findAll({
@@ -244,7 +248,9 @@ export const docdash = async(req,res) =>
               email: ref.patient.user.email,
               phone: ref.patient.user.phone,
               gender: ref.patient.user.gender,
-              age: ref.patient.user.age
+              age: ref.patient.user.age,
+              emergency_person: ref.patient.emergency_cont_name,
+              emergency_phone: ref.patient.emergency_cont_phone
             },
             medical_info: {
               blood_type: ref.patient.blood_type,
@@ -428,7 +434,7 @@ catch(err){
 
 
 
-}
+};
 
 
 

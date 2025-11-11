@@ -12,6 +12,7 @@
 //what if tuongeze ka req.body field kwa pat aki sign in ndo i allowa di msee si pat akue pat
 
 import Patient from "../config/db/orm/ormmodels/patients.js";
+import Referral from "../config/db/orm/ormmodels/referrals.js";
 import User from "../config/db/orm/ormmodels/user.js";
 import vertok from "../utils/jwt/verjwt.js";
 import { genmail } from "../utils/mail/mailer.js";
@@ -20,6 +21,7 @@ import { genmail } from "../utils/mail/mailer.js";
 
 
 //dashboard
+//add ipatient as role coz well even docs can be sick sometimes
 
 export const patdash = async(req,res) =>{
 try{
@@ -31,15 +33,46 @@ try{
     if(!decoded) return res.status(401).json({error:' Invalid  or expired token '});
     const pd = decoded?.id?.patient;
     const pid = pd.id
-    if(!pd || !pd.userId || pd.emergency_cont_name || pd.emergency_cont_phone) return res.status(403).json({error:'Didi you sumggle this token'});
-    
+    const usid = pd.userId;
+    const pus = await User.findByPk(usid);
+    const pat = await Patient.findByPk(pid);
+    if(!pus) return res.status(404).json({error:'You are not a registered user'});
+    if(!pat) return res.status(404).json({error: 'Your patient details have not been submitted yet'});
+    if(!pd || !pd.userId || pd.emergency_cont_name || pd.emergency_cont_phone || pus.user_role !== 'patient' || pd.national_id !== pat.national_id) return res.status(403).json({error:'Diddy  gave  you  this sumggled token right? '});
+    const pr = await Referral.findOne({where:{patient_id: pid}});
+
+
+//what if hana referralss narudi ..
+const patpay ={
+  message: `Welcome ${pus.fname} ${pus.lname}`,
+  patient:{
+    name: `${pus.fname} ${pus.lname}`,
+    patient_id: pat.id,
+    user_id: pus.id,
+    national_id: pat.national_id,
+    blood_type: pat?.blood_type || 'Not specified',
+    chronic_conditions: pat?.chronic_conditions || 'None',
+    emergency_cont_name: pat?.emergency_cont_name || 'None',
+    emergency_cont_phone: pat?.emergency_cont_phone || 'None',
+    is_insured: pat?.is_insured || 'Not insured',
+    insurance_type: pat?.insurance_type || 'Not insured'
+  }
+
+
+};
+
+if(!pr) return res.status(200).json({patient:{patpay}, referrals:'Seems you have none'});
+
+
+
+
     const patientReferrals = await Referral.findAll({
         where: { patient_id: pid },
         include: [
           {
             model: Patient,
             as: 'patient',
-            attributes: ['id', 'blood_type', 'allergies', 'chronic_conditions', 'is_insured', 'insurance_type'],
+            attributes: ['id', 'blood_type', 'allergies', 'chronic_conditions', 'is_insured', 'insurance_type','emergency_cont_name','emergency_cont_phone'],
             include: [
               {
                 model: User,
@@ -72,6 +105,10 @@ try{
         order: [['created_at', 'DESC']]
       });
 
+
+
+
+
       
       const aptp = {
         patient: {
@@ -82,13 +119,15 @@ try{
           age: patientReferrals[0]?.patient?.user?.age,
           contact: {
             email: patientReferrals[0]?.patient?.user?.email,
-            phone: patientReferrals[0]?.patient?.user?.phone
+            phone: patientReferrals[0]?.patient?.user?.phone,
+            emergency_cont_name: patientReferrals[0]?.patient?.emergency_cont_name || 'No emergency contact',
+            emergency_cont_phone: patientReferrals[0]?.patient?.emergency_cont_phone || 'No emergency contactos'
           },
           medical_info: {
             blood_type: patientReferrals[0]?.patient?.blood_type,
             allergies: patientReferrals[0]?.patient?.allergies,
             chronic_conditions: patientReferrals[0]?.patient?.chronic_conditions,
-            insured: patientReferrals[0]?.patient?.is_insured ?? 'Not insured',
+            insured: patientReferrals[0]?.patient?.is_insured  || 'Not insured',
             insurance_type: patientReferrals[0]?.patient?.insurance_type ?? 'Not specified'
           }
         },
@@ -177,7 +216,7 @@ export const subpat = async(req,res)=>{
     const ah = req.headers['authorization'];
     if(!ah) return res.status(401).json({error:'Missing auth token'});
     if(!ah.startsWith('Bearer ')) return res.status(403).json({error:'Invalid token format'});
-    if(!blood_type || !emergency_cont_name || !emergency_cont_phone) return res.staus(401).json({error:'Please specify required fields'});
+    if(!blood_type || !emergency_cont_name || !emergency_cont_phone) return res.status(401).json({error:'Please specify required fields'});
     if(is_insured && !insurance_type) return res.status(403).json({error:'Please specify insurance type'});
     const token = ah.split(" ")[1];
     const decoded = vertok(token); //todo edit vertok.js and ad an error handler
