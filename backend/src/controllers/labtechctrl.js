@@ -38,7 +38,8 @@ try{
     if(!ah.startsWith('Bearer ')) return res.status(403).json({error:'Invalido tokeno formate'});
     const token = ah.split(" ")[1];
     const decoded = vertok(token);
-    if(!decoded || decoded.id) return res.status(403).json({error:'Invalid or expired auth token'});
+    //console.log(decoded);
+    if(!decoded || !decoded.id) return res.status(403).json({error:'Invalid or expired auth token'});
     const usid = decoded.id;
     const email = decoded.email;
     const user = await User.findByPk(usid);
@@ -58,7 +59,7 @@ try{
     });
 
     const lb = await Labtech.findOne({where:{license_no:license_no}});
-    const fac = Facility.findByPk(faci);
+    const fac = await Facility.findByPk(faci);
     if(!lb) return res.status(503).json({error: 'Unsuccesful in updating labtech details'});
 
     const labtp = {
@@ -125,16 +126,16 @@ const tmp = `<!DOCTYPE html>
 </head>
 <body>
   <div class="container">
-    <h2>Welcome Labtech {{name}}</h2>
+    <h2>Welcome Labtech ${user.lname}</h2>
     <p>We're excited to have you join the AfyaLink network. Below are your registration details:</p>
 
-    <div class="value"><span class="label">Name:</span>${labtp.name}</div>
-    <div class="value"><span class="label">Verified:</span> ${labtp.verified}</div>
-    <div class="value"><span class="label">License No:</span> ${labtp.license_no}</div>
-    <div class="value"><span class="label">Speciality:</span> ${labtp.speciality}</div>
-    <div class="value"><span class="label">Years of Experience:</span> ${labtp.years_experience}</div>
-    <div class="value"><span class="label">Facility:</span> ${labtp.facility}</div>
-    <div class="value"><span class="label">Submitted On:</span> ${labtp.submitted}</div>
+    <div class="value"><span class="label">Name: </span>${user.fname} ${user.lname}</div>
+    <div class="value"><span class="label">Verified: </span> ${user.is_verified}</div>
+    <div class="value"><span class="label">License No: </span> ${lb.license_no}</div>
+    <div class="value"><span class="label">Speciality: </span> ${lb.speciality}</div>
+    <div class="value"><span class="label">Years of Experience: </span> ${lb.years_experience}</div>
+    <div class="value"><span class="label">Facility: </span> ${fac.fac_name} (${fac.fac_type})</div>
+    <div class="value"><span class="label">Submitted On: </span> ${lb.created_at}</div>
 
     <p>If any of the above information is incorrect, please contact your administrator immediately.</p>
 

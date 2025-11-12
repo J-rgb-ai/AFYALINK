@@ -169,7 +169,7 @@ app.all('/api/v1', (req,res)=>{
       'POST /api/users/nurses/verify',
       'GET /api/users/nurses/dashboard',
       'POST /api/users/nurses/referrals/create',
-      'POST /api/users/nursess/visits/create',
+      'POST /api/users/nurses/visits/create',
       'POST /api/users/doctors/surgeons/submit',
       'GET /api/users/doctors/surgeons/dashboard',
       'POST /api/users/doctors/surgeons/referrals/create',

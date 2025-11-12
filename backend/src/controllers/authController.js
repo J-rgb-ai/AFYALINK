@@ -654,72 +654,6 @@ const factype = fac?.fac_type || 'Unknown';
 
 
 }
-else if(user.role === 'labtech' && user.is_verified)
-{
-//do labtech shii over here 
-
-const lid = user.id;
-const lbs = await Labtech.findOne({where:{user_id:lid}});
-if(!lbs){
-
-  const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
-    const facid = user.facility_id;
-
-const fac = await Facility.findByPk(facid);
-const facname = fac?.fac_name || 'Unknown';
-const factype = fac?.fac_type || 'Unknown';
-
-
-  return  res.status(200).json({
-      message: 'Login succesful',
-      user:{
-        id: user.id,
-        fname: user.fname,
-        lname: user.lname,
-        email: user.email,
-        role: user.user_role,
-        age: user.age,
-        verified: user.is_verified,
-        facility: facname,
-        facility_type: factype,
-        joined: user.created_at
-      },
-      usertoken: token
-    
-    });
-
-
-}
-
-if(lbs){
-
-
-
-const labtp = {
-        message: `Welcome Labtech ${user.fname} ${user.lname}`,
-        labtech:{
-            userId: user.id,
-            labtId: lbs.id,
-            name: user.fname + ' ' + user.lname,
-            verified: user.is_verified,
-            license_no: lbs.license_no,
-            speciality: lbs?.speciality || 'None',
-            years_experience: lbs.years_experience,
-            facility: `${fac?.fac_name || 'Unknown'}  (${fac?.fac_type || ' also Unknown '})`,
-            submitted: lbs.created_at
-        }
-    };
-
-    const labt = 'Bearer ' + gentok(labtp);
-
-
-    return res.status(200).json({labtp, labtech_token: labt});
-
-}
-
-
-}
-
 
 
 
@@ -947,6 +881,79 @@ reftoken: reftok
 
 
 }
+
+
+else if(user.user_role === 'labtech' && user.is_verified)
+  {
+  //do labtech shii over here 
+  
+  const lid = user.id;
+  const lbs = await Labtech.findOne({where:{user_id:lid}});
+  const facid = user.facility_id;
+  const fac = await Facility.findByPk(facid);
+  const facname = fac?.fac_name || 'Unknown';
+  const factype = fac?.fac_type || 'Unknown';
+  
+  //console.log(lbs);
+  if(!lbs){
+  
+    const token = 'Bearer ' + gentok(user.id, user.email || user.phone);
+      
+  
+  
+  
+    return  res.status(200).json({
+        message: 'Login succesful',
+        user:{
+          id: user.id,
+          fname: user.fname,
+          lname: user.lname,
+          email: user.email,
+          role: user.user_role,
+          age: user.age,
+          verified: user.is_verified,
+          facility: facname,
+          facility_type: factype,
+          joined: user.created_at
+        },
+        usertoken: token
+      
+      });
+  
+  
+  }
+  
+ else  if(lbs){
+  
+  
+  
+  const labtp = {
+          message: `Welcome Labtech ${user.fname} ${user.lname}`,
+          labtech:{
+              userId: user.id,
+              labtId: lbs.id,
+              name: user.fname + ' ' + user.lname,
+              verified: user.is_verified,
+              license_no: lbs.license_no,
+              speciality: lbs?.speciality || 'None',
+              years_experience: lbs.years_experience,
+              facility: `${fac?.fac_name || 'Unknown'}  (${fac?.fac_type || ' also Unknown '})`,
+              submitted: lbs.created_at
+          }
+      };
+  
+      const labt = 'Bearer ' + gentok(labtp);
+  
+  
+      return res.status(200).json({labtp, labtech_token: labt});
+  
+  }
+  
+  
+  }
+  
+  
+  
 
 
 
