@@ -1,7 +1,7 @@
-require('dotenv').config();
+/*require('dotenv').config();
 const db = require('mysql2');
 
-module.exports = async function createPool(user,password) {
+module.exports = async function cratePool(user,password) {
      return db.createPool({
     host: process.env.DB_host,
     port: process.env.DB_PORT,
@@ -12,5 +12,5 @@ module.exports = async function createPool(user,password) {
     connectionLimit: 10,
     queueLimit: 0
 }
-)};
+)};*/
 
