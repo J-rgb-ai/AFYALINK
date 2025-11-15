@@ -1,6 +1,10 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import Referral from './referrals.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import Referral from './referrals.js';
+
+
+export default(sequelize)=> {
 
 const BlockchainLog = sequelize.define('BlockchainLog', {
   id: {
@@ -10,10 +14,10 @@ const BlockchainLog = sequelize.define('BlockchainLog', {
   },
   referral_id: {
     type: DataTypes.INTEGER,
-    references: {
+    /*references: {
       model: Referral,
       key: 'id'
-    }
+    }*/
   },
   tx_id: {
     type: DataTypes.STRING(100)
@@ -40,8 +44,23 @@ const BlockchainLog = sequelize.define('BlockchainLog', {
   tableName: 'blockchain_log'
 });
 
-// Associations
+
+BlockchainLog.associate = (models) =>{
+  BlockchainLog.belongsTo(models.Referral,{foreignKey: 'referral_id', as: 'chain_reff'});
+
+}
+
+
+return BlockchainLog;
+
+}
+// 
+// As
+// s
+// ociations
+/*
 BlockchainLog.belongsTo(Referral, { foreignKey: 'referral_id' });
 Referral.hasMany(BlockchainLog, { foreignKey: 'referral_id' });
 
 export default BlockchainLog;
+*/

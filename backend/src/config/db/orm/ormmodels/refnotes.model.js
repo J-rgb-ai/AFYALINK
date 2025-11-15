@@ -1,8 +1,10 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import Referral from './referrals.js';
-import User from './user.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import Referral from './referrals.model.js';
+//import User from './user.model..js';
 
+export default(sequelize)=>{
 const ReferralNote = sequelize.define('ReferralNote', {
   id: {
     type: DataTypes.INTEGER,
@@ -12,21 +14,21 @@ const ReferralNote = sequelize.define('ReferralNote', {
   referral_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
+   /* references: {
       model: Referral,
       key: 'id'
-    }
+    }*/
   },
   author_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
+   /* references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   note: {
-    type: DataTypes.TEXT
+    type: DataTypes.TEXT //change later to string idk
   },
   created_at: {
     type: DataTypes.DATE,
@@ -43,6 +45,20 @@ const ReferralNote = sequelize.define('ReferralNote', {
   tableName: 'referral_notes'
 });
 
+
+ReferralNote.associate = (models) =>{
+  ReferralNote.belongsTo(models.Referral,{foreignKey: 'referral_id',as: 'summary'});
+  ReferralNote.belongsTo(models.User,{foreignKey:'author_id', as: 'author'});
+
+}
+
+
+
+return ReferralNote;
+}
+
+
+/*
 // Associations
 ReferralNote.belongsTo(Referral, { foreignKey: 'referral_id', as: 'not'});
 Referral.hasMany(ReferralNote, { foreignKey: 'referral_id',  as: 'not'});
@@ -50,4 +66,4 @@ Referral.hasMany(ReferralNote, { foreignKey: 'referral_id',  as: 'not'});
 ReferralNote.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
 User.hasMany(ReferralNote, { foreignKey: 'author_id' });
 
-export default ReferralNote;
+export default ReferralNote;*/

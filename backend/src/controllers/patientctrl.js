@@ -11,12 +11,14 @@
 ///only those who have verified their emails can submit their info ere
 //what if tuongeze ka req.body field kwa pat aki sign in ndo i allowa di msee si pat akue pat
 
-import Patient from "../config/db/orm/ormmodels/patients.js";
-import Referral from "../config/db/orm/ormmodels/referrals.js";
-import User from "../config/db/orm/ormmodels/user.js";
+//import Patient from "../config/db/orm/ormmodels/patients.js";
+//import Referral from "../config/db/orm/ormmodels/referrals.js";
+//import User from "../config/db/orm/ormmodels/user.js";
 import vertok from "../utils/jwt/verjwt.js";
 import { genmail } from "../utils/mail/mailer.js";
+import models from "../config/db/orm/sequalize.js";
 
+const {Patient,Referral,User} = models;
 
 
 
@@ -71,34 +73,34 @@ if(!pr) return res.status(200).json({patient:{patpay}, referrals:'Seems you have
         include: [
           {
             model: Patient,
-            as: 'patient',
+            as: 'ref_patient',
             attributes: ['id', 'blood_type', 'allergies', 'chronic_conditions', 'is_insured', 'insurance_type','emergency_cont_name','emergency_cont_phone'],
             include: [
               {
                 model: User,
-                as: 'user',
+                as: 'user_patient',
                 attributes: ['id', 'fname', 'lname', 'email', 'phone', 'gender', 'age']
               }
             ]
           },
           {
             model: User,
-            as: 'referring_doctor',
+            as: 'referer',
             attributes: ['id', 'fname', 'lname', 'email', 'user_role']
           },
           {
             model: Facility,
-            as: 'facilityfrom',
+            as: 'facfro',
             attributes: ['fac_name', 'fac_type']
           },
           {
             model: Facility,
-            as: 'facilityto',
+            as: 'facto',
             attributes: ['fac_name', 'fac_type']
           },
           {
             model: ReferralNote,
-            as: 'referral_notes',
+            as: 'summary',
             required: false
           }
         ],
@@ -113,22 +115,22 @@ if(!pr) return res.status(200).json({patient:{patpay}, referrals:'Seems you have
       const aptp = {
         patient: {
           patient_id: patientReferrals[0]?.patient?.id,
-          user_id: patientReferrals[0]?.patient?.user?.id,
-          name: `${patientReferrals[0]?.patient?.user?.fname} ${patientReferrals[0]?.patient?.user?.lname}`,
-          gender: patientReferrals[0]?.patient?.user?.gender,
-          age: patientReferrals[0]?.patient?.user?.age,
+          user_id: patientReferrals[0]?.ref_patient?.user_patient?.id,
+          name: `${patientReferrals[0]?.ref_patient?.user_patient?.fname} ${patientReferrals[0]?.ref_patient?.user_patient?.lname}`,
+          gender: patientReferrals[0]?.ref_patient?.user_patient?.gender,
+          age: patientReferrals[0]?.ref_patient?.user_patient?.age,
           contact: {
-            email: patientReferrals[0]?.patient?.user?.email,
-            phone: patientReferrals[0]?.patient?.user?.phone,
-            emergency_cont_name: patientReferrals[0]?.patient?.emergency_cont_name || 'No emergency contact',
-            emergency_cont_phone: patientReferrals[0]?.patient?.emergency_cont_phone || 'No emergency contactos'
+            email: patientReferrals[0]?.ref_patient?.user_patient?.email,
+            phone: patientReferrals[0]?.ref_patient?.user_patient?.phone,
+            emergency_cont_name: patientReferrals[0]?.ref_patient?.emergency_cont_name || 'No emergency contact',
+            emergency_cont_phone: patientReferrals[0]?.ref_patient?.emergency_cont_phone || 'No emergency contactos'
           },
           medical_info: {
-            blood_type: patientReferrals[0]?.patient?.blood_type,
-            allergies: patientReferrals[0]?.patient?.allergies,
-            chronic_conditions: patientReferrals[0]?.patient?.chronic_conditions,
-            insured: patientReferrals[0]?.patient?.is_insured  || 'Not insured',
-            insurance_type: patientReferrals[0]?.patient?.insurance_type ?? 'Not specified'
+            blood_type: patientReferrals[0]?.ref_patientpatient?.blood_type,
+            allergies: patientReferrals[0]?.ref_patient?.allergies,
+            chronic_conditions: patientReferrals[0]?.ref_patient?.chronic_conditions,
+            insured: patientReferrals[0]?.ref_patient?.is_insured  || 'Not insured',
+            insurance_type: patientReferrals[0]?.ref_patient?.insurance_type ?? 'Not specified'
           }
         },
         referrals: patientReferrals.map(ref => ({
@@ -138,19 +140,19 @@ if(!pr) return res.status(200).json({patient:{patpay}, referrals:'Seems you have
           reason: ref.reason,
           referred_on: ref.created_at,
           from_facility: {
-            name: ref.facilityfrom?.fac_name,
-            type: ref.facilityfrom?.fac_type
+            name: ref.facfro?.fac_name,
+            type: ref.facfro?.fac_type
           },
           to_facility: {
-            name: ref.facilityto?.fac_name,
-            type: ref.facilityto?.fac_type
+            name: ref.facto?.fac_name,
+            type: ref.facto?.fac_type
           },
-          doctor: {
-            name: `${ref.referring_doctor?.fname} ${ref.referring_doctor?.lname}`,
-            email: ref.referring_doctor?.email,
-            role: ref.referring_doctor?.user_role
+          referer: {
+            name: `${ref.referer?.fname} ${ref.referer?.lname}`,
+            email: ref.referer?.email,
+            role: ref.referer?.user_role
           },
-          notes: ref.referral_notes?.map(note => ({
+          notes: ref.summary?.map(note => ({
             note: note.note,
             noted_at: note.created_at
           }))

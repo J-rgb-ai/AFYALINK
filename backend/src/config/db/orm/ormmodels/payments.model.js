@@ -1,8 +1,11 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import Patient from './patients.js';
-import Referral from './referrals.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import Patient from './patients.js';
+//import Referral from './referrals.js';
 
+
+export default(sequelize)=>{
 const Payment = sequelize.define('Payment', {
   id: {
     type: DataTypes.INTEGER,
@@ -11,17 +14,17 @@ const Payment = sequelize.define('Payment', {
   },
   patient_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Patient,
       key: 'id'
-    }
+    }*/
   },
   referral_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Referral,
       key: 'id'
-    }
+    }*/
   },
   amount: {
     type: DataTypes.DECIMAL(20, 2),
@@ -70,7 +73,24 @@ const Payment = sequelize.define('Payment', {
   tableName: 'payments'
 });
 
+
+Payment.associate = (models) =>{
+  Payment.belongsTo(models.Patient,{foreignKey: 'patient_id', as: 'pay_patient'});
+  Payment.belongsTo(models.Referral,{foreignKey: 'referral_id', as: 'pay_reff'});
+
+}
+
+
+
+
+return Payment;
+}
+
+
+
+/*
 // Associations
+this code is trash "withered rose emoji"
 Payment.belongsTo(Patient, { foreignKey: 'patient_id' });
 Patient.hasMany(Payment, { foreignKey: 'patient_id' });
 
@@ -78,3 +98,4 @@ Payment.belongsTo(Referral, { foreignKey: 'referral_id' });
 Referral.hasMany(Payment, { foreignKey: 'referral_id' });
 
 export default Payment;
+*/

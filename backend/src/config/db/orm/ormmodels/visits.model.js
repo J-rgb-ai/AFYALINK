@@ -1,9 +1,13 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import Patient from './patients.js';
-import Facility from './facility.js';
-import Referral from './referrals.js';
-import User from './user.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import Patient from './patients.model.js';
+//import Facility from './facility.model.js';
+//import Referral from './referrals.model.js';
+//import User from './user.model..js';
+
+
+export default(sequelize) =>{
 
 const Visit = sequelize.define('Visit', {
   id: {
@@ -13,30 +17,30 @@ const Visit = sequelize.define('Visit', {
   },
   patient_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Patient,
       key: 'id'
-    }
+    }*/
   },
   facility_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Facility,
       key: 'id'
-    }
+    }*/
   },
   visit_date: {
-    type: DataTypes.DATEONLY
+    type: DataTypes.DATE
   },
   reason: {
     type: DataTypes.TEXT
   },
   server_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   was_referred: {
     type: DataTypes.BOOLEAN,
@@ -52,10 +56,10 @@ const Visit = sequelize.define('Visit', {
   },
   referral_id:{
     type: DataTypes.INTEGER,
-    references:{
+   /* references:{
       model: Referral,
       key: 'id'
-    }
+    }*/
 
   },
   infacility:{
@@ -73,6 +77,25 @@ const Visit = sequelize.define('Visit', {
   tableName: 'visits'
 });
 
+Visit.associate = (models) =>{
+Visit.belongsTo(models.Referral,{foreignKey: 'referral_id', as: 'factoviz'});
+Visit.belongsTo(models.Patient,{foreignKey: 'patient_id', as: 'viz_patient'});
+Visit.belongsTo(models.Facility,{foreignKey: 'facility_id', as: 'viz_facility'});
+Visit.belongsTo(models.User,{foreignKey: 'server_id', as: 'medic'});
+
+Visit.hasOne(models.Referral,{foreignKey: 'visit_id', as: 'facfroviz'});
+
+
+};
+
+
+
+return Visit;
+
+}
+
+
+/*
 // Associations
 Visit.belongsTo(Patient, { foreignKey: 'patient_id' });
 Patient.hasMany(Visit, { foreignKey: 'patient_id' });
@@ -86,3 +109,5 @@ Visit.belongsTo(User, { foreignKey: 'server_id', as: 'server' });
 User.hasMany(Visit, { foreignKey: 'server_id' });
 
 export default Visit;
+
+*/

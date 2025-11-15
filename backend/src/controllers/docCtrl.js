@@ -16,17 +16,20 @@ taongeza kaa ako kwa doc table apewe diff docttoken
 
  */
 
-import User from "../config/db/orm/ormmodels/user.js";
-import Doctor from "../config/db/orm/ormmodels/doctors.js";
+//import User from "../config/db/orm/ormmodels/user.js";
+//import Doctor from "../config/db/orm/ormmodels/doctors.js";
 import vertok from "../utils/jwt/verjwt.js";
 import { decode } from "jsonwebtoken";
 import gentok from "../utils/jwt/genjwt.js";
 import { genmail } from "../utils/mail/mailer.js";
-import Referral from "../config/db/orm/ormmodels/referrals.js";
-import Patient from "../config/db/orm/ormmodels/patients.js";
-import ReferralNote from '../config/db/orm/ormmodels/refnotes.js';
-import Facility from "../config/db/orm/ormmodels/facility.js";
+//import Referral from "../config/db/orm/ormmodels/referrals.js";
+//import Patient from "../config/db/orm/ormmodels/patients.js";
+//import ReferralNote from '../config/db/orm/ormmodels/refnotes.js';
+//import Facility from "../config/db/orm/ormmodels/facility.js";
 
+import models from "../config/db/orm/sequalize.js";
+
+const{User,Doctor,Referral,Patient,ReferralNote,Facility} = models;
 
 //addoc details   
 
@@ -216,60 +219,60 @@ export const docdash = async(req,res) =>
             include: [
               {
                 model: Patient,
-                as: 'patient',
+                as: 'ref_patient',
                 include: [
                   {
                     model: User,
-                    as: 'user',
+                    as: 'user_patient',
                     attributes: ['fname', 'lname', 'email', 'phone', 'gender', 'age']
                   }
                 ]
               },
               {
                 model: ReferralNote,
-                as: 'referral_notes',
+                as: 'summary',
                 required: false
               },
               {
                 model: Facility,
-                as: 'facilityfrom'
+                as: 'facfro'
               },
               {
                 model: Facility,
-                as: 'facilityto'
+                as: 'facto'
               }
             ]
           });
 
 
           const refpay1 = acrefs.map(ref => ({
-            patient_name: `${ref.patient.user.fname} ${ref.patient.user.lname}`,
+            patient_name: `${ref.ref_patient.user.fname} ${ref.ref_patient.user.lname}`,
             contact: {
-              email: ref.patient.user.email,
-              phone: ref.patient.user.phone,
-              gender: ref.patient.user.gender,
-              age: ref.patient.user.age,
-              emergency_person: ref.patient.emergency_cont_name,
-              emergency_phone: ref.patient.emergency_cont_phone
+              email: ref.ref_patient.user_patient.email,
+              phone: ref.ref_patient.user_patient.phone,
+              gender: ref.ref_patient.user_patient.gender,
+              age: ref.ref_patient.user_patient.age,
+              emergency_person: ref.ref_patient.emergency_cont_name,
+              emergency_phone: ref.ref_patient.emergency_cont_phone
             },
             medical_info: {
-              blood_type: ref.patient.blood_type,
-              allergies: ref.patient.allergies,
-              chronic_conditions: ref.patient.chronic_conditions,
-              insured: ref.patient.is_insured,
-              insurance_type: ref.patient.insurance_type
+              blood_type: ref.ref_patient.blood_type,
+              allergies: ref.ref_patient.allergies,
+              chronic_conditions: ref.ref_patient.chronic_conditions,
+              insured: ref.ref_patient.is_insured,
+              insurance_type: ref.ref_patient.insurance_type
             },
             referral_details: {
               priority: ref.priority,
               reason: ref.reason,
               status: ref.status,
               referred_on: ref.created_at,
-              from: ref.facilityfrom?.fac_name,
-              referring_type: ref.facilityfrom?.fac_type,
-              to: ref.facilityto?.fac_name,
-              receiving_type: ref.facilityto?.fac_type
+              from: ref.facfro?.fac_name,
+              referring_type: ref.facfro?.fac_type,
+              to: ref.facto?.fac_name,
+              receiving_type: ref.facto?.fac_type
             },
-            notes: ref.referral_notes?.map(note => ({
+            notes: ref.summary?.map(note => ({
               notes: note.note,
               noted_at: note.created_at
             }))

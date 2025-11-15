@@ -82,22 +82,25 @@ import express from 'express';
 import dotenv from 'dotenv';
 //import jsonwebtoken from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import User from '../config/db/orm/ormmodels/user.js';
+//import User from '../config/db/orm/ormmodels/user.model.js';
 import gentok from '../utils/jwt/genjwt.js';
-import Facility from '../config/db/orm/ormmodels/facility.js';
-import Doctor from '../config/db/orm/ormmodels/doctors.js';
+//import Facility from '../config/db/orm/ormmodels/facility.model.js';
+//import Doctor from '../config/db/orm/ormmodels/doctors.model.js';
 import vertok from '../utils/jwt/verjwt.js';
 import genotp from '../utils/otp/genotp.js';
 import verotp from '../utils/otp/verotp.js';
 import { Fn } from 'sequelize/lib/utils';
 import { sendotpmail,sendregmail,respasmail } from '../utils/mail/mailer.js';
 import redis from '../config/redis/redis.js';
-import Patient from '../config/db/orm/ormmodels/patients.js';
-import userrouter from '../routes/authRoutes.js';
-import Nurse from '../config/db/orm/ormmodels/nurse.js';
-import Surgeon from '../config/db/orm/ormmodels/surgeon.js';
-import Labtech from '../config/db/orm/ormmodels/labtechs.js';
+//import Patient from '../config/db/orm/ormmodels/patients.model.js';
+//import userrouter from '../routes/authRoutes.js';
+//import Nurse from '../config/db/orm/ormmodels/nurse.model.js';
+//import Surgeon from '../config/db/orm/ormmodels/surgeon.model.js';
+//import Labtech from '../config/db/orm/ormmodels/labtechs.model.js';
 import { format } from 'morgan';
+import models from '../config/db/orm/sequalize.js';
+
+const{User,Facility,Doctor,Patient,Nurse,Surgeon,Labtech} = models;
 
 
 

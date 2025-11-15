@@ -1,18 +1,22 @@
-import Labtech from "../config/db/orm/ormmodels/labtechs.js";
-import LabResult from "../config/db/orm/ormmodels/labres.js";
+//import Labtech from "../config/db/orm/ormmodels/labtechs.js";
+//import LabResult from "../config/db/orm/ormmodels/labres.js";
 import { format } from "morgan";
 import vertok from "../utils/jwt/verjwt.js";
-import User from "../config/db/orm/ormmodels/user.js";
-import Blocked from '../config/db/orm/ormmodels/blockip.js';
-import Facility from "../config/db/orm/ormmodels/facility.js";
+//import User from "../config/db/orm/ormmodels/user.js";
+//import Blocked from '../config/db/orm/ormmodels/blockip.js';
+//import Facility from "../config/db/orm/ormmodels/facility.js";
 import { genmail } from "../utils/mail/mailer.js";
 import gentok from "../utils/jwt/genjwt.js";
-import { loadESLint } from "eslint";
-import Patient from "../config/db/orm/ormmodels/patients.js";
+//import { loadESLint } from "eslint";
+//import Patient from "../config/db/orm/ormmodels/patients.js";
 import { where } from "sequelize";
-import Referral from "../config/db/orm/ormmodels/referrals.js";
+//import Referral from "../config/db/orm/ormmodels/referrals.js";
+import models from "../config/db/orm/sequalize.js";
+import dotenv from 'dotenv';
 
 
+dotenv.config();
+const {Labtech,LabResult,User,Blocked,Facility,Patient,Referral,ReferralNote} = models;
 
 
 
@@ -199,18 +203,18 @@ try{
     const fid = user.facility_id;
     const pr = 'patient';
     const ref = await Referral.findAll({where:{reffering_user_id:usid}});
-    const faa = await Facility.findAll();
-    const fac = await Facility.findByPk(fid); //ki aaray ikubwa tu
+    //const faa = await Facility.findAll();
+    const fac = await Facility.findByPk(fid);
     const patr = await User.findall({
         where: {user_role: pr},
     
         include:[
             {
                 model: Patient,
-                as: 'user'
+                as: 'user_patient'
             },{
                 model: Facility,
-                as: 'facility'
+                as: 'user_fac'
             }
         ]
     });
@@ -219,14 +223,14 @@ try{
         patient :{
             id: p.id,
             name: `${p.fname} ${p.lname}`,
-            blood_type: p.user.blood_type,
-            allergies: p.user.allergies,
-            chronic_conditions: p?.user?.chronic_conditions || 'None',
-            emergency_cont_name: p?.user?.emergency_cont_name || 'Not given',
-            emergency_cont_phone: p?.user.emergency_cont_phone || 'Not given',
-            is_insured: p?.user.is_insured || 'Nope',
-            insurance_type: p?.user?.insurance_type || 'Not insured',
-            facility: `${p.facility.fac_name} (${p.facility.fac_type})`
+            blood_type: p.user_patient.blood_type,
+            allergies: p.user_patient.allergies,
+            chronic_conditions: p?.user_patient?.chronic_conditions || 'None',
+            emergency_cont_name: p?.user_patient?.emergency_cont_name || 'Not given',
+            emergency_cont_phone: p?.user_patient.emergency_cont_phone || 'Not given',
+            is_insured: p?.user_patient.is_insured || 'Nope',
+            insurance_type: p?.user_patient?.insurance_type || 'Not insured',
+            facility: `${p.user_fac.fac_name} (${p.user_fac.fac_type})`
         }
 
 
@@ -259,34 +263,34 @@ try{
     };
 
 
-    if(!ref) return res.status(200).json({labp,patp, facilities: {faa}});
+    if(!ref) return res.status(200).json({labp,patp, facilities: 'use fetch /api/v1/facilities/view'});
 
     const acrefs = await Referral.findAll({
       where: {reffering_user_id: usid},
       include:[
           {
               model: Patient,
-              as: 'patient',
+              as: 'ref_patient',
               include:[
                   {
                       model: User,
-                      as: 'user',
+                      as: 'user_patient',
                       attributes: ['fname','lname','email','phone','gender','ager']
                   }
               ]
           },
           {
               model: ReferralNote,
-              as: 'referral_notes',
+              as: 'summary',
               required: false
           },
           {
               model: Facility,
-              as: 'facilityfrom'
+              as: 'facfro'
           },
           {
               model: Facility,
-              as: 'facilityto'
+              as: 'facto'
           }
 
       ]
@@ -295,31 +299,31 @@ try{
 
 
 const refpay2 = acrefs.map(ref=>({
-  patient_name: `${ref.patient.user.fname} ${ref.patient.user.lname}`,
+  patient_name: `${ref.ref_patient.user_patient.fname} ${ref.ref_patient.user_patient.lname}`,
   contact: {
-      email: ref.patient.user.email,
-      phone: ref.patient.user.phone,
-      gender: ref.patient.user.gender,
-      age: ref.patient.user.age
+      email: ref.ref_patient.user_patient.email,
+      phone: ref.ref_patient.user_patient.phone,
+      gender: ref.ref_patient.user_patient.gender,
+      age: ref.ref_patient.user_patient.age
   },
   medical_info: {
-      blood_type: ref?.patient?.blood_type || 'Not specified',
-      allergies: ref?.patient?.allergies || 'None',
-      chronic_conditions: ref?.patient?.chronic_conditions || 'None',
-      insured: ref?.patient?.is_insured || 'Not insured',
-      insurance_type: ref?.patient?.insurance_type || 'Not insured' 
+      blood_type: ref?.ref_patient?.blood_type || 'Not specified',
+      allergies: ref?.ref_patient?.allergies || 'None',
+      chronic_conditions: ref?.ref_patient?.chronic_conditions || 'None',
+      insured: ref?.ref_patient?.is_insured || 'Not insured',
+      insurance_type: ref?.ref_patient?.insurance_type || 'Not insured' 
   },
   referral_details:{
       priority: ref.priority,
       reason: ref.reason,
       status: ref.status,
       referred_on: ref.updated_at,
-      from: ref.facilityfrom.fac_name,
-      referring_type: ref.facilityfrom.fac_type,
-      to: ref.facilityto.fac_name,
-      receiving_type: ref.facilityto.fac_type
+      from: ref.facfro.fac_name,
+      referring_type: ref.facfro.fac_type,
+      to: ref.facto.fac_name,
+      receiving_type: ref.facto.fac_type
   },
-  notes: ref.referral_notes?.map(note=>({
+  notes: ref.summary?.map(note=>({
       notes: note.note,
       noted_at: note.created_at
   }))
@@ -328,7 +332,7 @@ const refpay2 = acrefs.map(ref=>({
 
 
 
-res.status(200).json({labp,patp,refpay2, facilities:{faa}});
+res.status(200).json({labp,patp,refpay2, facilities:'use fetch /api/v1/facilities/view'});
 
 
 

@@ -1,8 +1,11 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import Patient from './patients.js';
-import Labtech from './labtechs.js';
-import Referral from './referrals.js'; // optional, if you plan to use referral_id
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import Patient from './patients.js';
+//import Labtech from './labtechs.js';
+//import Referral from './referrals.js'; // optional, if you plan to use referral_id
+
+export default(sequelize) =>{
 
 const LabResult = sequelize.define('LabResult', {
   id: {
@@ -12,25 +15,25 @@ const LabResult = sequelize.define('LabResult', {
   },
   patient_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Patient,
       key: 'id'
-    }
+    }*/
   },
   labtech_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Labtech,
       key: 'id'
-    }
+    }*/
   },
   referral_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    references: {
+   /* references: {
       model: Referral,
       key: 'id'
-    }
+    }*/
   },
   test_type: {
     type: DataTypes.STRING(100)
@@ -67,6 +70,20 @@ const LabResult = sequelize.define('LabResult', {
   tableName: 'labresults'
 });
 
+
+LabResult.associate = (models) =>{
+  LabResult.belongsTo(models.Labtech,{foreignKey: 'labtech_id', as: 'res_labtech'});
+  LabResult.belongsTo(models.Patient,{foreignKey:'patient_id',as: 'lab_patient'});
+}
+
+
+
+return LabResult;
+
+}
+
+
+/*
 // Associations
 LabResult.belongsTo(Patient, { foreignKey: 'patient_id' });
 Patient.hasMany(LabResult, { foreignKey: 'patient_id' });
@@ -77,4 +94,4 @@ Labtech.hasMany(LabResult, { foreignKey: 'labtech_id' });
 LabResult.belongsTo(Referral, { foreignKey: 'referral_id' });
 Referral.hasMany(LabResult, { foreignKey: 'referral_id' });
 
-export default LabResult;
+export default LabResult;*/

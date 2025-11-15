@@ -52,24 +52,25 @@ doctor or surgeon or nurse  requesta a referral
  */
 
 
-import Referral from "../config/db/orm/ormmodels/referrals.js";
+//import Referral from "../config/db/orm/ormmodels/referrals.model.js";
 import vertok from "../utils/jwt/verjwt.js";
-import ReferralNote from "../config/db/orm/ormmodels/refnotes.js";
-import User from "../config/db/orm/ormmodels/user.js";
-import Patient from "../config/db/orm/ormmodels/patients.js";
-import Facility from "../config/db/orm/ormmodels/facility.js";
+//import ReferralNote from "../config/db/orm/ormmodels/refnotes.model.js";
+//import User from "../config/db/orm/ormmodels/user.model.js";
+//import Patient from "../config/db/orm/ormmodels/patients.model.js";
+//import Facility from "../config/db/orm/ormmodels/facility.model.js";
 import { genmail } from "../utils/mail/mailer.js";
 import chalk from "chalk";
 import { format } from "morgan";
-import Doctor from "../config/db/orm/ormmodels/doctors.js";
+//import Doctor from "../config/db/orm/ormmodels/doctors.model.js";
 import { json } from "sequelize";
-import Surgeon from "../config/db/orm/ormmodels/surgeon.js";
-import Nurse from "../config/db/orm/ormmodels/nurse.js";
-import Labtech from "../config/db/orm/ormmodels/labtechs.js";
-import Visit from "../config/db/orm/ormmodels/visits.js";
+//import Surgeon from "../config/db/orm/ormmodels/surgeon.model.js";
+//import Nurse from "../config/db/orm/ormmodels/nurse.model.js";
+//import Labtech from "../config/db/orm/ormmodels/labtechs.model.js";
+//import Visit from "../config/db/orm/ormmodels/visits.model.js";
 
+import models from "../config/db/orm/sequalize.js";
 
-
+const{Referral,ReferralNote,User,Patient,Facility,Doctor,Surgeon,Nurse,Labtech,Visit} = models;
 
 
 
@@ -95,33 +96,33 @@ try{
         include: [
           {
             model: User,
-            as: 'referrer',
+            as: 'referer',
             attributes: ['id', 'fname', 'lname', 'email', 'user_role']
           },
           {
             model: Patient,
-            as: 'patient',
+            as: 'ref_patient',
             include: [
               {
                 model: User,
-                as: 'user',
+                as: 'user_patient',
                 attributes: ['id', 'fname', 'lname', 'email', 'phone', 'gender', 'age']
               }
             ]
           },
           {
             model: Facility,
-            as: 'facilityfrom',
+            as: 'facfro',
             attributes: ['fac_name', 'fac_type']
           },
           {
             model: Facility,
-            as: 'facilityto',
+            as: 'facto',
             attributes: ['fac_name', 'fac_type']
           },
           {
             model: ReferralNote,
-            as: 'not',
+            as: 'summary',
             attributes:['note']
           }
         ],
@@ -134,36 +135,39 @@ try{
         status: ref.status,
         priority: ref.priority,
         reason: ref.reason,
-        notes: ref.note,
-        summary: ref.not.notes,
+        notes: ref.summary?.map(note => ({
+          note: note.note,
+          noted_at: note.created_at
+        })),
+        summary: ref.summary.note,
 
         referred_on: ref.created_at,
         from_facility: {
-          name: ref.facilityfrom?.fac_name,
-          type: ref.facilityfrom?.fac_type
+          name: ref.facfro?.fac_name,
+          type: ref.facto?.fac_type
         },
         to_facility: {
-          name: ref.facilityto?.fac_name,
-          type: ref.facilityto?.fac_type
+          name: ref.facto?.fac_name,
+          type: ref.facto?.fac_type
         },
         doctor: {
-          name: `${ref.referrer?.fname} ${ref.referrer?.lname}`,
-          email: ref.referrer?.email,
-          role: ref.referrer?.user_role
+          name: `${ref.referer?.fname} ${ref.referrer?.lname}`,
+          email: ref.referer?.email,
+          role: ref.referer?.user_role
         },
         patient: {
-          name: `${ref.patient?.user?.fname} ${ref.patient?.user?.lname}`,
-          gender: ref.patient?.user?.gender,
-          age: ref.patient?.user?.age,
+          name: `${ref.ref_patient?.user_patient?.fname} ${ref.patient?.user?.lname}`,
+          gender: ref.ref_patient?.user_patient?.gender,
+          age: ref.ref_patient?.user_patient?.age,
           contact: {
-            email: ref.patient?.user?.email,
-            phone: ref.patient?.user?.phone
+            email: ref.ref_patient?.user_patient?.email,
+            phone: ref.ref_patient?.user_patient?.phone
           },
-          blood_type: ref.patient?.blood_type,
-          allergies: ref.patient?.allergies,
-          chronic_conditions: ref.patient?.chronic_conditions,
-          insured: ref.patient?.is_insured ?? 'Not insured',
-          insurance_type: ref.patient?.insurance_type ?? 'Not specified'
+          blood_type: ref.ref_patient?.blood_type,
+          allergies: ref.ref_patient?.allergies,
+          chronic_conditions: ref.ref_patient?.chronic_conditions,
+          insured: ref.ref_patient?.is_insured ?? 'Not insured',
+          insurance_type: ref.ref_patient?.insurance_type ?? 'Not specified'
         }
       }));
 
@@ -1946,8 +1950,294 @@ try{
     const myf = user.facility_id;
     const getf = await Facility.findByPk(myf);
     if(!getf || !getf.is_active) return res.status(403).json({error: 'Inactive or ghost facility'});
-    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, server_id: usid, infacility: true}});
-    if(vz1) return res.status(403).json({error:'Cannot create visit because user is still at the facility at the moment'})
+    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, was_referred: false,server_id: usid, infacility: true}}); //usisahau kueka across all routes
+    if(vz1) return res.status(403).json({error:'Cannot create visit because user is still at the facility at the moment'});
+    //got 24 hours to be referred or just clear the referral automatically
+   
+   
+    const dt = new Date().getTime();
+
+    const refs = await Referral.findOne({where:{patient_id:patient_id,receiving_facility_id:myf,status:'accepted'}});
+    if(refs)
+    {
+      const sch = refs.sched_date;
+      const scht = sch.getTime();
+      const dif = dt -scht;
+      const dfh = Math.floor(dif/(1000*60*60));
+      const facfroi = refs.referring_facility_id;
+      const factoi = refs.receiving_facility_id;
+      const facfro = await Facility.findByPk(facfroi);
+      const facto = await Facility.findByPk(factoi);
+      if(!facfro) throw new Error('The facility the patient you were referred from does not exist');
+      if(!facto || !facfro.is_active) throw new Error('The facility the patient was referred to does not exist');
+      if(dfh<0){
+        //siku b4 ref 
+        const rifid = refs.id;
+      const facfr = refs.referring_facility_id;
+      const fs = Facility.findByPk(facfr);
+
+      const prevviz = await Visit.findOne({where:{facility_id:facfr,was_referred:true,patient_id:patient_id,infacility:true}});
+      prevviz.infacility = false;
+      await prevviz.save();
+      await Visit.create({
+        patient_id,
+        facility_id:myf,
+        visit_date:vd,
+        reason,
+        server_id: usid
+      });
+
+
+      const vz = await Visit.findOne({where:{server_id: usid, patient_id: patient_id, facility_id: myf,infacility: true}});
+
+        const rp ={
+          message: 'Visit created',
+          patient:{
+            id: patient_id,
+            server_id: usid,
+            facility: `${getf.fac_name} (${getf.fac_type})`,
+            visit_date: vd,
+            reason: reason,
+            was_referred: vz.was_referred,
+            referred_patient: vz.referred_patient,
+            from: `${fs.fac_name} (${fs.fac_type})`,
+            to: `${getf.fac_name} (${getf.fac_type})`,
+            sched_date: refs.sched_date,
+            created_at: vz.created_at
+          }
+        };
+
+        //send mail that he/she visited the hospital
+        const sub = `You are now at ${getf.fac_name} (${getf.fac_type})`;
+        const ptemp = `<html>
+        <head><title>Your have visited ${getf.fac_name} (${getf.fac_type}) for ${vz.reason}</title></head>
+        <body>
+          <p>Dear (whatever your pronous are idc) ${pus.fname} ${pus.lname};
+          <p>You  visited  ${getf.fac_name} (${getf.fac_type})   at  ${vz.visit_date} <br> for $<i>${vz.reason}<i/></p>
+          <p>Remember you also have a referral from ${facfro.fac_name} (${facfro.fac_type}) to ${facto.fac_name} (${facto.fac_type})</p>
+          <p>You are supposed to report at ${facto.fac_name} (${facto.fac_type}) at ${refs.sched_date} or <b>24 hours<b> from this time</p>
+          <p>Or else your Referral will be suspended</p>
+          <p>Thank you for choosing afyalink..</p>
+          <p>Remember you can always give up in life if things dont seem to work right</p>
+      </body>
+      <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+        </html>`;
+  
+        await genmail(patem,sub,ptemp);
+    
+        return res.status(201).json({rp});
+
+
+
+
+
+      }
+      else if(dfh>0 && dfh < 25){
+
+      //create ref visit
+      const rifid = refs.id;
+      const facfr = refs.referring_facility_id;
+      const fs = Facility.findByPk(facfr);
+      if(!fs) throw new Error('No such facility on afyalink..the facility you were referred from does not exist');
+      const prevviz = await Visit.findOne({where:{facility_id:facfr,was_referred:true,patient_id:patient_id}});
+      const chnrfv = await Visit.findOne({where:{facility_id:myf,patient_id:patient_id}});
+      if(chnrfv) { chnrfv.infacility = false; await chnrfv.save(); }
+      if(prevviz)
+      {
+        prevviz.infacility = false;
+        await prevviz.save();
+        await Visit.create({
+          patient_id,
+          facility_id: myf,
+          visit_date: vd,
+          reason,
+          server_id: usid,
+          referred_patient: true,
+          infacility: true,
+          referral_id: rifid
+
+
+        });
+        const vz = await Visit.findOne({where:{server_id: usid, patient_id: patient_id, facility_id: myf,infacility: true}});
+
+        const rp ={
+          message: 'Visit created',
+          patient:{
+            id: patient_id,
+            server_id: usid,
+            facility: `${getf.fac_name} (${getf.fac_type})`,
+            visit_date: vd,
+            reason: reason,
+            was_referred: vz.was_referred,
+            referred_patient: vz.referred_patient,
+            from: `${fs.fac_name} (${fs.fac_type})`,
+            to: `${getf.fac_name} (${getf.fac_type})`,
+            sched_date: refs.sched_date,
+            created_at: vz.created_at
+          }
+        };
+        await Referral.update({status: 'completed'},{where:{patient_id:patient_id,receiving_facility_id:myf,status:'accepted'}});
+
+        //send email ref is completed now
+        const sub = `Completion of referral from ${facfro.fac_name} (${facfro.fac_type})`;
+        const ptemp = `<html>
+        <head><title>Your referral to  ${facto.fac_name} (${facto.fac_type}) has been completed</title></head>
+        <body>
+          <p>Dear (whatever your pronous are idc) ${pus.fname} ${pus.lname};
+          <p>You had a referral from ${facfro.fac_name} (${facfro.fac_type}) to ${facto.fac_name} (${facto.fac_type})  scheduled on ${refs.sched_date} </p>
+          <p>You were supposed to report at ${facto.fac_name} (${facto.fac_type}) at ${refs.sched_date} or <b>24 hours<b> from this time</p>
+          <p>You reported to ${facto.fac_name} (${facto.fac_type}) at ${vz.visit_date} and now your referral is now complete</p>
+          <p>Thank you for choosing afyalink..</p>
+          <p>Remember you can always give up in life if things dont seem to work right</p>
+      </body>
+      <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+        </html>`;
+  
+        await genmail(patem,sub,ptemp);
+        // send to refman wa facfro
+        const refo = await User.findAll({where:{facility_id:facfroi,user_role: 'refmanager'}});
+        if(!refo) throw new Error('Facilities whth no referral managers cant make referrals ');
+  
+        for(i=0;i<refo.length;i++)
+        {
+          const mel = refo[i].email;
+          const sub = `Completion of  referral to ${facto.fac_name} (${facto.fac_type})`;
+          const rfotemp = `<html>
+        <head><title>The referral to ${facto.fac_name} (${facto.fac_type}) has been completed</title></head>
+        <body>
+          <p> Dear ${refo[i].fname} ${refo[i].lname};
+          <p>The  referral from ${facfro.fac_name} (${facfro.fac_type}) to ${facto.fac_name} (${facto.fac_type})  scheduled on ${refs.sched_date} was completed</p>
+          <p>The patient  was supposed to report at ${facto.fac_name} (${facto.fac_type}) at ${refs.sched_date} or <b>24 hours<b> from this time</p>
+          <p>The patient reported at ${new Date()} to ${facto.fac_name} (${facto.fac_type})and so now the referral has been completed</p>
+          <p>Thank you so much for what you do at afyalink as a <i>${refo[i].user_role}</i></p>
+          <p>Remember you can always give up in life if things dont seem to work right</p>
+      </body>
+      <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+        </html>`;
+        await genmail(mel,sub,rfotemp);
+  
+        }
+  
+        //send to facto
+        const refto = await User.findAll({where:{facility_id:factoi,user_role:'refmanager'}});
+        if(!refto) throw new Error('Only facilities with referral managers can make referrals');
+  
+        for(i=0;i<refto.length;i++)
+        {
+          const im = refto[i].email;
+          const sub = `Completion of  referral from ${facfro.fac_name} (${facfro.fac_type})`;
+          const rfotemp = `<html>
+        <head><title>The referral from ${facfro.fac_name} (${facfro.fac_type}) has been completed</title></head>
+        <body>
+          <p>The  referral from ${facfro.fac_name} (${facfro.fac_type}) to ${facto.fac_name} (${facto.fac_type})  scheduled on ${refs.sched_date}  has been completed</p>
+          <p>The patient  was supposed to report at ${facto.fac_name} (${facto.fac_type}) at ${refs.sched_date} or <b>24 hours<b> from this time</p>
+          <p>The patient reported at ${new Date()} to/at idk the adjectives ${facto.fac_name} (${facto.fac_type})and so now  the referral is completed</p>
+          <p>Thank you for choosing afyalink as a <i>${refo[i].user_role}</i> </p>
+          <p>Remember you can always give up in life if its too much</p>
+      </body>
+      <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+        </html>`;
+  
+        await genmail(im,sub,rfotemp);
+  
+        }
+  
+
+
+
+
+
+    
+        return res.status(201).json({rp});
+
+        
+
+
+      }
+
+    }
+    elseif(dfh>24)
+    {
+      //suspended ref
+      await Referral.update({status: 'suspended'},{where:{patient_id:patient_id,receiving_facility_id:myf,status:'accepted'}});
+      //TODOsend email that referral delayed and so was rejected;
+      //to patient and refmanagers at facfro 
+      patem = p.email;
+      const sub = `Suspension of delayed referral from ${facfro.fac_name} (${facfro.fac_type})`;
+      const ptemp = `<html>
+      <head><title>We have suspended your referral to ${facto.fac_name} (${facto.fac_type})</title></head>
+      <body>
+        <p>Dear (whatever your pronous are idc) ${pus.fname} ${pus.lname};
+        <p>You had a referral from ${facfro.fac_name} (${facfro.fac_type}) to ${facto.fac_name} (${facto.fac_type})  scheduled on ${refs.sched_date} </p>
+        <p>You were supposed to report at ${facto.fac_name} (${facto.fac_type}) at ${refs.sched_date} or <b>24 hours<b> from this time</p>
+        <p>But now its ${new Date()} and you have not reported  at ${facto.fac_name} (${facto.fac_type})and so we have suspended your referral</p>
+        <p>Sorry even though this is all your fault and we take no blame for your actions</p>
+        <p>Remember you can always give up in life if things dont seem to work right</p>
+    </body>
+    <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+      </html>`;
+
+      await genmail(patem,sub,ptemp);
+      // send to refman wa facfro
+      const refo = await User.findAll({where:{facility_id:facfroi,user_role: 'refmanager'}});
+      if(!refo) throw new Error('Facilities whth no referral managers cant make referrals ');
+
+      for(i=0;i<refo.length;i++)
+      {
+        const mel = refo[i].email;
+        const sub = `Suspension of delayed referral to ${facto.fac_name} (${facto.fac_type})`;
+        const rfotemp = `<html>
+      <head><title>The referral to ${facto.fac_name} (${facto.fac_type}) was suspended due to delay</title></head>
+      <body>
+        <p>The  referral from ${facfro.fac_name} (${facfro.fac_type}) to ${facto.fac_name} (${facto.fac_type})  scheduled on ${refs.sched_date} was suspended</p>
+        <p>Since the patient  was supposed to report at ${facto.fac_name} (${facto.fac_type}) at ${refs.sched_date} or <b>24 hours<b> from this time</p>
+        <p>But now its ${new Date()} and it  has not reported  at ${facto.fac_name} (${facto.fac_type})and so we have suspended the referral</p>
+        <p>Sorry even though this is all their fault and you should take no blame for their actions</p>
+        <p>Remember you can always give up in life if things dont seem to work right</p>
+    </body>
+    <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+      </html>`;
+      await genmail(mel,sub,rfotemp);
+
+      }
+
+      //send to facto
+      const refto = await User.findAll({where:{facility_id:factoi,user_role:'refmanager'}});
+      if(!refto) throw new Error('Only facilities with referral managers can make referrals');
+
+      for(i=0;i<refto.length;i++)
+      {
+        const im = refto[i].email;
+        const sub = `Suspension of delayed referral from ${facfro.fac_name} (${facfro.fac_type})`;
+        const rfotemp = `<html>
+      <head><title>The referral from ${facfro.fac_name} (${facfro.fac_type}) was suspended due to delay</title></head>
+      <body>
+        <p>The  referral from ${facfro.fac_name} (${facfro.fac_type}) to ${facto.fac_name} (${facto.fac_type})  scheduled on ${refs.sched_date}  has been suspended</p>
+        <p>Since the patient  was supposed to report at ${facto.fac_name} (${facto.fac_type}) at ${refs.sched_date} or <b>24 hours<b> from this time</p>
+        <p>But now its ${new Date()} and it  has not reported  at ${facto.fac_name} (${facto.fac_type})and so we have suspended the referral</p>
+        <p>Sorry even though this is all their fault and you should take no blame for their actions</p>
+        <p>Remember you can always give up in life if things dont seem to work right</p>
+    </body>
+    <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+      </html>`;
+
+      await genmail(im,sub,rfotemp);
+
+      }
+
+      
+
+    }
+
+
+
+    }
+
+
+
+
+    //outsiders so unclutured huh
+
 
   const vd = new Date();
     const viz = await Visit.create({
@@ -1976,7 +2266,28 @@ try{
       }
     };
 
+    //todo copt this hiss all over lb sjj and ns
+
+    const sub = `You are now at ${getf.fac_name} (${getf.fac_type})`;
+    const ptemp = `<html>
+    <head><title>Your have visited ${getf.fac_name} (${getf.fac_type}) for ${vz.reason}</title></head>
+    <body>
+      <p>Dear (whatever your pronous are idc) ${pus.fname} ${pus.lname};
+      <p>You  visited  ${getf.fac_name} (${getf.fac_type})   at  ${vz.visit_date} <br> for $<i>${vz.reason}<i/></p>
+      <p>Thank you for choosing afyalink..</p>
+      <p>Remember you can always give up in life if things dont seem to work right</p>
+  </body>
+  <footer><i> &copy afyalink ${new Date().getFullYear()}</i></footer>
+    </html>`;
+
+    await genmail(patem,sub,ptemp);
+    //adi apa
+
+
     return res.status(201).json({rp});
+
+
+
 
   }
   else if(sj)
@@ -1995,7 +2306,8 @@ try{
     const myf = user.facility_id;
     const getf = await Facility.findByPk(myf);
     if(!getf || !getf.is_active) return res.status(403).json({error: 'Inactive or ghost facility'});
-    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, server_id: usid, infacility: true}});
+    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, was_referred: false,server_id: usid, infacility: true}}); //usisahau kueka across all routes
+
     if(vz1) return res.status(403).json({error:'Cannot create visit because user is still at the facility at the moment'})
 
 
@@ -2047,7 +2359,8 @@ try{
     const myf = user.facility_id;
     const getf = await Facility.findByPk(myf);
     if(!getf || !getf.is_active) return res.status(403).json({error: 'Inactive or ghost facility'});
-    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, server_id: usid, infacility: true}});
+    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, was_referred: false,server_id: usid, infacility: true}}); //usisahau kueka across all routes
+
     if(vz1) return res.status(403).json({error:'Cannot create visit because user is still at the facility at the moment'})
 
 
@@ -2099,8 +2412,13 @@ try{
     const myf = user.facility_id;
     const getf = await Facility.findByPk(myf);
     if(!getf || !getf.is_active) return res.status(403).json({error: 'Inactive or ghost facility'});
-    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, server_id: usid, infacility: true}});
-    if(vz1) return res.status(403).json({error:'Cannot create visit because user is still at the facility at the moment'})
+    const vz1 = await Visit.findOne({where:{patient_id: patient_id, facility_id: myf, was_referred: false,server_id: usid, infacility: true}}); //usisahau kueka across all routes
+
+    if(vz1) return res.status(403).json({error:'Cannot create visit because user is still at the facility at the moment'});
+
+
+
+
 
 
   const vd = new Date();
@@ -2401,21 +2719,6 @@ await genmail(email,subj,tmp);
 
 
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

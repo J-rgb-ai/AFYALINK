@@ -1,6 +1,8 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
 
+export default(sequelize)=>{
 const Department = sequelize.define('Department', {
   id: {
     type: DataTypes.INTEGER,
@@ -25,4 +27,16 @@ const Department = sequelize.define('Department', {
   tableName: 'departments'
 });
 
+Department.associate = (models)=>{
+  Department.hasMany(models.Staff,{foreignKey: 'department_id', as: 'department'});
+
+}
+
+
+return Department;
+}
+
+
+/*
 export default Department;
+*/

@@ -1,29 +1,13 @@
-import bcrypt from 'bcrypt';
+
 import jsonwebtoken from 'jsonwebtoken';
 import vertok from '../utils/jwt/verjwt.js';
-import User from '../config/db/orm/ormmodels/user.js';
-import verotp from '../utils/otp/verotp.js';
-import Facility from '../config/db/orm/ormmodels/facility.js';
-import gentok from '../utils/jwt/genjwt.js';
-import Staff from '../config/db/orm/ormmodels/staff.js';
-import Patient from '../config/db/orm/ormmodels/patients.js';
-import Doctor from '../config/db/orm/ormmodels/doctors.js';
-import Surgeon  from '../config/db/orm/ormmodels/surgeon.js';
-import Nurse from '../config/db/orm/ormmodels/nurse.js';
-import Labtech from '../config/db/orm/ormmodels/labtechs.js';
-import Referral from '../config/db/orm/ormmodels/referrals.js';
-import ReferralNote from '../config/db/orm/ormmodels/refnotes.js';
-import BlockchainLog from '../config/db/orm/ormmodels/chainlogs.js';
-import Visit from '../config/db/orm/ormmodels/visits.js';
-import LabResult from '../config/db/orm/ormmodels/labres.js';
-import Payment from '../config/db/orm/ormmodels/payments.js';
-import Department  from '../config/db/orm/ormmodels/departments.js';
-import AuditLog from '../config/db/orm/ormmodels/auditlog.js';
-import Blocked from '../config/db/orm/ormmodels/blockip.js';
-import { request } from 'express';
+import models from '../config/db/orm/sequalize.js'
 import { genmail } from '../utils/mail/mailer.js';
-import { format } from 'morgan';
+import { Op, where } from 'sequelize';
 
+
+
+const{User,Doctor,Facility,Referral,ReferralNote,Department,Payment,Patient,Blocked,BlockchainLog,Surgeon,LabResult,Visit,Staff} = models;
 
 
 
@@ -193,12 +177,16 @@ export const admindash = async (req,res) =>{
      * 
      */
 
+
+     //kwanza apa paging inafaa ku happen for scalabiity
+
+     //fix circular imports
     
      const allfac = await  Facility.findAll();
-     const allus = await User.findAll({attributes:{exclude:['password_hash']}});
+     const allus = await User.findAll({attributes:{exclude:['password_hash']},where:{facility_id: facid}});
      const allstaff = await Staff.findAll();
-     const allpat = await Patient.findAll();
-     const alldoc = await Doctor.findAll();
+     const allpat = await Patient.findAll({include:[{ model: User, as: 'user', where:{facility_id:facid},exclude:['password_hash']}]});
+     const alldoc = await Doctor.findAll({include:[{model: User, as: ''}]});
      const allsug = await Surgeon.findAll();
      const allnus = await Nurse.findAll();
      const altech = await Labtech.findAll();
@@ -395,6 +383,10 @@ export const createadmin = async (req,res) =>{
         const adminid = adm.id;
         const getad = await User.findByPk(adminid);
         if(!getad) return res.status(401).json({error: 'No such admin'});
+        const fc = getad.facility_id;
+        const veladm = await User.findAll({where:{facility_id: fc, user_role:{[Op.or]:['admin','iadmin']}}});
+        if(!veladm) return res.status(403).json({error:'Facility has no admins please intialize system at facility first'});
+        if(veladm.length >= 2) return res.status(403).json({error:'System already has enough admins at your facility'});
         const crtb = `${getad.fname} ${getad.lname}`;
         const user = await User.findByPk(setid);
         if(!user) return res.status(404).json({error:'The requested user does not exist'});
@@ -534,12 +526,12 @@ try{
     const ah = req.headers['authorization'];
     if(!ah) return res.status(401).json({error: 'Missing auth body'});
     if(!ah.startsWith('Bearer ')) return res.status(401).json({error:'Invalid token format'});
-    if(!delid ) return res.status(422).json({error: 'Missing admin id ',format: '{delid: "2", delt: "yes/no"}'});
+    if(!delid || !delt ) return res.status(422).json({error: 'Missing admin id ',format: '{delid: "2", delt: "yes/no"}'});
     const ch = await User.findByPk(delid);
     //console.log(ch);
     if(!ch) return res.status(404).json({error: 'User not found'});
     //console.log(ch);
-    if(ch.user_role === 'admin') return res.status(401).json({error: 'You will be reported for doing this'});
+    if(ch.user_role === 'admin') return res.status(401).json({error: 'You will be reported for doing this..and we might also disable your account in the process..'}); //disable user account..ama acha tu..coz hasira ni ya nn
 
     const token = ah.split(" ")[1];
 
@@ -551,7 +543,10 @@ try{
     const adi = adm.id;
     const vl = await User.findByPk(adi);
     if(!adi || !(adi.user_role === 'admin' || adi.user_role === 'iadmin')) return res.status(404).json({error: 'Admin not found'});
-    if(vl.facility_id !== ch.facility_id) return res.status(403).json({warn: 'Please only work with individuals in your facility'});
+    if(adi.facility_id !== ch.facility_id) return res.status(403).json({warn: 'Please only work with individuals in your facility'});
+    if(!vl) return res.status(403).json({error:'You are not a registered user'});
+    if(vl.disabled) return res.status(403).json({error: 'Disabled accounts cannot perform this action'});
+    if(vl,facility_id !== ch,facility_id) return res.status(403).json({error: 'Can only edit changes of users in your facility'});
 
 
     //admin deleting iadmins
@@ -1096,6 +1091,7 @@ try{
   if(!chea) return res.status(401).json({error:'You are not allowed to do that'});
   const ched = chea.user_role;
   const chedv = chea.is_verified;
+  const afid = chea.facility_id;
   if(!chedv || !(ched === 'admin' || ched === 'iadmin')) return res.status(403).json({error: 'You are not priviledged enough to perform that action'});
 
   const man = await User.findByPk(refid);
@@ -1104,7 +1100,8 @@ try{
   const prv = man.is_verified;
   const email = man.email;
   if(chea.facility_id !== man.facility_id) return res.status(403).json({warn:'Please select a member of your facility'});
-
+  const valref = User.findAll({where:{user_role: 'refmanager',facility_id: afid}});
+  if(valref.length >= 2) return res.status(403).json({error: 'Facility already has enough Referral managers'});
   if(prf !== 'refmanagertobe') return res.status(401).json({error: 'User not eligible for approval'});
   if(prf === 'refmanager') return res.status(200).json({error:'User was already approved'});
   if(!prv) return res.status(403).json({error:`Cannot approve ${man.fname} ${man.lname} because he / she has not yet verifed email`});
@@ -1176,6 +1173,7 @@ try{
 
 
   //send email that he is a ref manager now
+  
 
  
 
@@ -1203,10 +1201,10 @@ catch(err)
 
 
 
-
-
-
 };
+
+
+//create referralmanager...
 
 
 

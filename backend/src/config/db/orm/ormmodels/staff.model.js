@@ -1,8 +1,10 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import Department from './departments.js';
-import User from './user.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import Department from './departments.js';
+//import User from './user.model.js';
 
+export default(sequelize)=> {
 const Staff = sequelize.define('Staff', {
   id: {
     type: DataTypes.INTEGER,
@@ -19,17 +21,17 @@ const Staff = sequelize.define('Staff', {
   },
   department_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Department,
       key: 'id'
-    }
+    }*/
   },
   user_id: {
     type: DataTypes.INTEGER,
-    references: {
+    /*references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   created_at: {
     type: DataTypes.DATE,
@@ -46,6 +48,19 @@ const Staff = sequelize.define('Staff', {
   tableName: 'staff'
 });
 
+Staff.associate = (models) =>{
+  Staff.belongsTo(models.User,{foreignKey: 'user_is', as: 'staff_user'});
+  Staff.belongsTo(models.Department,{foreignKey: 'department_id',as: 'department'});
+
+}
+
+
+return Staff;
+
+}
+
+
+/*
 Staff.belongsTo(Department, { foreignKey: 'department_id' });
 Department.hasMany(Staff, { foreignKey: 'department_id' });
 
@@ -53,3 +68,4 @@ Staff.belongsTo(User, { foreignKey: 'user_id' });
 User.hasOne(Staff, { foreignKey: 'user_id' });
 
 export default Staff;
+*/

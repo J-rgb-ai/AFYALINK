@@ -1,7 +1,9 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import User from './user.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import User from './user.model..js';
 
+export default(sequelize)=>{
 const AuditLog = sequelize.define('AuditLog', {
   id: {
     type: DataTypes.INTEGER,
@@ -10,10 +12,10 @@ const AuditLog = sequelize.define('AuditLog', {
   },
   user_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   action: {
     type: DataTypes.STRING(100),
@@ -37,8 +39,20 @@ const AuditLog = sequelize.define('AuditLog', {
   tableName: 'audit_log'
 });
 
+
+AuditLog.associate = (models)=>{
+  AuditLog.belongsTo(models.User,{foreignKey: 'user_id', as: 'audit_user'});
+}
+
+return AuditLog;
+}
+
+
+/*
+trash code here idk wtf i was on at the moment
 // Associations
 AuditLog.belongsTo(User, { foreignKey: 'user_id' });
 User.hasMany(AuditLog, { foreignKey: 'user_id' });
 
 export default AuditLog;
+*/

@@ -21,10 +21,10 @@ app.get('/', (req,res)=>{
 
 
 
-import express, { response } from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import sequelize from './config/db/orm/sequalize.js';
+import {sequelize} from './config/db/orm/sequalize.js';
 import userrouter from './routes/authRoutes.js';
 import adminroute from './routes/adminroute.js';
 import docroute from './routes/docroute.js';
@@ -37,7 +37,7 @@ import labr from './routes/labtechroute.js';
 import redis from './config/redis/redis.js';
 import morgan from 'morgan';
 import chalk from 'chalk';
-import { autoban, blockip } from './utils/security/security.js';
+import { autoban, blockip,blokipm } from './utils/security/security.js';
 //import cors from 'cors';
 
 
@@ -49,8 +49,9 @@ app.use(helmet());
 
 app.use(morgan('dev'));
 
+app.use(blokipm);
 app.use(autoban);
-app.use(blockip);
+//app.use(blockip);
 //app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
@@ -135,7 +136,7 @@ catch(err){
 
 
 
-const port = 3000 || process.env.PORT;
+const port = 80 || process.env.PORT;
 
 
 
@@ -145,7 +146,7 @@ app.all('/api/v1', (req,res)=>{
     endpoints:{
      users:[ 'POST  /api/users/sigunp',
       'POST /api/users/signin',
-      'GET /api/users/:id',
+      'GET /api/users/3',
       'POST /api/users/forgotpass',
       'PUT /api/users/resetpass',
       'POST /api/users/verify/email',
@@ -186,8 +187,10 @@ app.all('/api/v1', (req,res)=>{
      
      facilities:[
       'GET /api/facilities/view',
-      'GET /api/facilities/view/:id',
-      'POST /api/facilities/add'
+      'GET /api/facilities/view/1',
+      'POST /api/facilities/add',
+      'POST /api/facilities/upload/photo',
+      'POST /api/facilities/1/photo'
      ]
     }
   });

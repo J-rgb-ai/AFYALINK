@@ -1,7 +1,9 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import User from './user.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import User from './user.model..js';
 
+export default(sequelize) =>{
 const Nurse = sequelize.define('Nurse', {
   id: {
     type: DataTypes.INTEGER,
@@ -11,10 +13,10 @@ const Nurse = sequelize.define('Nurse', {
   user_id: {
     type: DataTypes.INTEGER,
     unique: true,
-    references: {
+    /*references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   license_number: {
     type: DataTypes.STRING(50),
@@ -53,8 +55,21 @@ const Nurse = sequelize.define('Nurse', {
   tableName: 'nurses'
 });
 
+Nurse.associate = (models) =>{
+  Nurse.belongsTo(models.User,{foreignKey: 'user_id', as: 'nurse'});
+};
+
+
+return Nurse;
+
+}
+
+
+
+/*
 // Associations
 Nurse.belongsTo(User, { foreignKey: 'user_id', as: 'nursee' });
 User.hasOne(Nurse, { foreignKey: 'user_id', as: 'nursee' });
 
 export default Nurse;
+*/

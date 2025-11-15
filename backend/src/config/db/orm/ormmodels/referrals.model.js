@@ -1,8 +1,12 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import Patient from './patients.js';
-import User from './user.js';
-import Facility from './facility.js'
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import Patient from './patients.model.js';
+//import User from './user.model..js';
+//import Facility from './facility.model.js'
+
+
+export default(sequelize)=>{
 
 const Referral = sequelize.define('Referral', {
   id: {
@@ -13,34 +17,34 @@ const Referral = sequelize.define('Referral', {
   patient_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
+   /* references: {
       model: Patient,
       key: 'id'
-    }
+    }*/
   },
   reffering_user_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
+   /* references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   reffering_facility_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
+   /* references: {
       model: Facility,
       key: 'id'
-    }
+    }*/
   },
   receiving_facility_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
+    /*references: {
       model: Facility,
       key: 'id'
-    }
+    }*/
   },
   reason: {
     type: DataTypes.TEXT
@@ -56,7 +60,7 @@ const Referral = sequelize.define('Referral', {
     type: DataTypes.STRING(100)
   },
   status: {
-    type: DataTypes.ENUM('processing', 'accepted', 'completed', 'rejected','approved','tobeapproved'),
+    type: DataTypes.ENUM('processing', 'accepted', 'completed', 'rejected','approved','tobeapproved','suspended'),
     defaultValue: 'tobeapproved'
   },
   notes: {
@@ -64,7 +68,8 @@ const Referral = sequelize.define('Referral', {
   },
   req_date:{
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   },
   need_date:{
     type: DataTypes.DATE
@@ -92,8 +97,31 @@ const Referral = sequelize.define('Referral', {
   tableName: 'referrals'
 });
 
-//asociates
+Referral.associate = (models) =>{
+  Referral.belongsTo(models.Patient,{foreignKey: 'patient_id', as: 'ref_patient'});
+  Referral.belongsTo(models.User,{foreignKey: 'reffering_user_id', as: 'referer'});
+  Referral.belongsTo(models.Facility,{foreignKey:'reffering_facility_id', as: 'facfro'});
+  Referral.belongsTo(models.Facility,{foreignKey:'receiving_facility_id', as: 'facto'});
+  Referral.belongsTo(models.Visit,{foreignKey: 'visit_id', as: 'facfroviz'});
 
+  Referral.hasOne(models.Visit,{foreignKey: 'referral_id', as: 'factoviz'});
+  Referral.hasOne(models.ReferralNote,{foreignKey: 'referral_id', as: 'summary'});
+  Referral.hasMany(models.BlockchainLog,{foreignKey: 'referral_id', as: 'chain_reff'});
+  Referral.hasMany(models.Payment,{foreignKey: 'referral_id', as: 'pay_reff'});
+
+
+}
+
+
+
+return Referral;
+
+}
+
+
+
+
+/*
 Referral.belongsTo(Patient, { foreignKey: 'patient_id' , as: 'patient'});
 Referral.belongsTo(User, { foreignKey: 'reffering_user_id', as: 'referrer' });
 Referral.belongsTo(Facility, { foreignKey: 'reffering_facility_id', as: 'facilityfrom' });
@@ -109,3 +137,4 @@ Facility.hasMany(Referral, { foreignKey: 'receiving_facility_id', as: 'facilityt
 
 
 export default Referral;
+*/

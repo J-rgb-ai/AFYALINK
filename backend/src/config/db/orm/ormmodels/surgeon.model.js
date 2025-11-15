@@ -1,8 +1,12 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import User from './user.js';
-import Doctor from './doctors.js';
-import Facility from './facility.js';
+import models from '../sequalize.js';
+import {sequelize} from '../sequalize.js';
+//import User from './user.model..js';
+//import Doctor from './doctors.model.js';
+//import Facility from './facility.model.js';
+
+
+export default(sequelize) =>{
 
 const Surgeon = sequelize.define('Surgeon', {
   id: {
@@ -12,17 +16,17 @@ const Surgeon = sequelize.define('Surgeon', {
   },
   user_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   doctor_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Doctor,
       key: 'id'
-    }
+    }*/
   },
   license_number: {
     type: DataTypes.STRING(50),
@@ -37,10 +41,10 @@ const Surgeon = sequelize.define('Surgeon', {
   },
   operating_facility_id: {
     type: DataTypes.INTEGER,
-    references: {
+   /* references: {
       model: Facility,
       key: 'id'
-    }
+    }*/
   },
   is_consultant: {
     type: DataTypes.BOOLEAN,
@@ -61,8 +65,18 @@ const Surgeon = sequelize.define('Surgeon', {
   tableName: 'surgeons'
 });
 
+Surgeon.associate = (models) =>{
+  Surgeon.belongsTo(models.User,{foreignKey: 'user_id', as: 'surgeon'});
+  Surgeon.belongsTo(models.Doctor,{foreignKey: 'doctor_id', as: 'sur_doctor'});
+  Surgeon.belongsTo(models.Facility,{foreignKey: 'operating_facility_id', as: 'sur_facility'});
+};
+
+return Surgeon;
+
+
+}
 // Associations
-Surgeon.belongsTo(User, { foreignKey: 'user_id' });
+/*Surgeon.belongsTo(User, { foreignKey: 'user_id' });
 User.hasOne(Surgeon, { foreignKey: 'user_id' });
 
 Surgeon.belongsTo(Doctor, { foreignKey: 'doctor_id' });
@@ -72,3 +86,4 @@ Surgeon.belongsTo(Facility, { foreignKey: 'operating_facility_id' });
 Facility.hasMany(Surgeon, { foreignKey: 'operating_facility_id' });
 
 export default Surgeon;
+*/

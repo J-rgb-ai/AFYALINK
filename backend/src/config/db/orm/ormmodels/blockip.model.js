@@ -1,6 +1,10 @@
-import { DataTypes, DATE } from "sequelize";
-import sequelize from "../sequalize.js";
+import { DataTypes } from "sequelize";
+import {sequelize} from "../sequalize.js";
+import models from "../sequalize.js";
 
+
+
+export default(sequelize) =>{
 const Blocked = sequelize.define('Blocked',{
     id:{
         type: DataTypes.INTEGER,
@@ -79,4 +83,12 @@ const Blocked = sequelize.define('Blocked',{
 
 
 
-export default Blocked;
+return Blocked;
+
+
+}
+
+
+
+
+//export default Blocked;

@@ -1,14 +1,15 @@
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import redis from '../../config/redis/redis.js';
-import User from '../../config/db/orm/ormmodels/user.js';
-import Blocked from '../../config/db/orm/ormmodels/blockip.js';
+//import User from '../../config/db/orm/ormmodels/user.model.js';
+//import Blocked from '../../config/db/orm/ormmodels/blockip.model.js/index.js';
 import { Op } from 'sequelize';
 import { genmail } from '../mail/mailer.js';
 import chalk from 'chalk';
+import models from '../../config/db/orm/sequalize.js';
 
 
-
+const{User,Blocked} = models;
 
 
 
@@ -114,7 +115,7 @@ try{
      //const diff = 10;
      console.log(chalk.green(`From: ${time} TO: ${new Date()}`));
      console.log('\n');
-     console.log(chalk.blueBright(`current_req: ${b.hits}  remaining_req: ${100 - parseInt(b.hits)}`));
+     console.log(chalk.red(`current_req: ${b.hits}  remaining_req: ${100 - parseInt(b.hits)}`));
      
 
      
@@ -175,6 +176,34 @@ try{
 
 
 };
+
+
+export const blokipm = async(req,res,next)=>{
+
+    try{
+        const ip = req.ip;
+        const tb = await Blocked.findOne({where:{ip:ip,blocked:true}});
+        if(tb){
+            return res.status(403).json({error:`You are forbidden to access this site due to suspicious activity`});
+        }
+        if(!tb)
+        {
+            console.log(chalk.cyan(`${req.method}: ${req.originalUrl} ${new Date()}`));
+        }
+
+        next();
+
+
+
+    }
+    catch(y)
+    {
+        console.log(chalk.red(y.message));
+        next();
+
+
+    }
+}
 
 
 

@@ -1,6 +1,9 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../sequalize.js';
-import User from './user.js';
+import models from '../sequalize.js';
+import { sequelize } from '../sequalize.js';
+
+
+export default(sequelize) =>{
 
 const Doctor = sequelize.define('Doctor', {
   id: {
@@ -11,10 +14,10 @@ const Doctor = sequelize.define('Doctor', {
   user_id: {
     type: DataTypes.INTEGER,
     unique: true,
-    references: {
+   /* references: {
       model: User,
       key: 'id'
-    }
+    }*/
   },
   license_number: {
     type: DataTypes.STRING(50),
@@ -33,7 +36,7 @@ const Doctor = sequelize.define('Doctor', {
   years_experience: {
     type: DataTypes.INTEGER,
     allowNull: false
-  },
+  }, 
   is_consultant: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
@@ -53,7 +56,23 @@ const Doctor = sequelize.define('Doctor', {
   tableName: 'doctors'
 });
 
-Doctor.belongsTo(User, { foreignKey: 'user_id' });
-User.hasOne(Doctor, { foreignKey: 'user_id' });
+Doctor.associate = (models) =>{
+  Doctor.belongsTo(models.User,{foreignKey:'user_id',as: 'doctor'});
+  Doctor.hasOne(models.Surgeon,{foreignKey: 'doctor_id', as: 'sur_doctor'});
 
-export default Doctor;
+};
+
+return Doctor;
+
+
+
+
+
+
+
+}
+
+
+
+
+//xport default Doctor;

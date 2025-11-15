@@ -1,15 +1,16 @@
 import { where } from "sequelize";
-import Facility from "../config/db/orm/ormmodels/facility.js";
-import Nurse from "../config/db/orm/ormmodels/nurse.js";
-import Referral from "../config/db/orm/ormmodels/referrals.js";
-import User from "../config/db/orm/ormmodels/user.js";
+//import Facility from "../config/db/orm/ormmodels/facility.js";
+//import Nurse from "../config/db/orm/ormmodels/nurse.js";
+//import Referral from "../config/db/orm/ormmodels/referrals.js";
+//import User from "../config/db/orm/ormmodels/user.js";
 import gentok from "../utils/jwt/genjwt.js";
 import vertok from "../utils/jwt/verjwt.js";
 import { genmail } from "../utils/mail/mailer.js";
-import Patient from "../config/db/orm/ormmodels/patients.js";
-import ReferralNote from "../config/db/orm/ormmodels/refnotes.js";
+//import Patient from "../config/db/orm/ormmodels/patients.js";
+//import ReferralNote from "../config/db/orm/ormmodels/refnotes.js";
+import models from "../config/db/orm/sequalize.js";
 
-
+const{Facility,Nurse,Referral,User,Patient,ReferralNote} = models;
 //nurse controller
 
 
@@ -205,27 +206,27 @@ export const nursedash = async(req,res) =>{
             include:[
                 {
                     model: Patient,
-                    as: 'patient',
+                    as: 'ref_patient',
                     include:[
                         {
                             model: User,
-                            as: 'user',
+                            as: 'user_patient',
                             attributes: ['fname','lname','email','phone','gender','ager']
                         }
                     ]
                 },
                 {
                     model: ReferralNote,
-                    as: 'referral_notes',
+                    as: 'summary',
                     required: false
                 },
                 {
                     model: Facility,
-                    as: 'facilityfrom'
+                    as: 'facfro'
                 },
                 {
                     model: Facility,
-                    as: 'facilityto'
+                    as: 'facto'
                 }
 
             ]
@@ -234,31 +235,31 @@ export const nursedash = async(req,res) =>{
 
 
      const refpay2 = acrefs.map(ref=>({
-        patient_name: `${ref.patient.user.fname} ${ref.patient.user.lname}`,
+        patient_name: `${ref.ref_patient.user_patient.fname} ${ref.ref_patient.user_patient.lname}`,
         contact: {
-            email: ref.patient.user.email,
-            phone: ref.patient.user.phone,
-            gender: ref.patient.user.gender,
-            age: ref.patient.user.age
+            email: ref.ref_patient.user.email,
+            phone: ref.ref_patient.user.phone,
+            gender: ref.ref_patient.user.gender,
+            age: ref.ref_patient.user.age
         },
         medical_info: {
-            blood_type: ref?.patient?.blood_type || 'Not specified',
-            allergies: ref?.patient?.allergies || 'None',
-            chronic_conditions: ref?.patient?.chronic_conditions || 'None',
-            insured: ref?.patient?.is_insured || 'Not insured',
-            insurance_type: ref?.patient?.insurance_type || 'Not insured' 
+            blood_type: ref?.ref_patient?.blood_type || 'Not specified',
+            allergies: ref?.ref_patient?.allergies || 'None',
+            chronic_conditions: ref?.ref_patient?.chronic_conditions || 'None',
+            insured: ref?.ref_patient?.is_insured || 'Not insured',
+            insurance_type: ref?.ref_patient?.insurance_type || 'Not insured' 
         },
         referral_details:{
             priority: ref.priority,
             reason: ref.reason,
             status: ref.status,
             referred_on: ref.updated_at,
-            from: ref.facilityfrom.fac_name,
-            referring_type: ref.facilityfrom.fac_type,
-            to: ref.facilityto.fac_name,
-            receiving_type: ref.facilityto.fac_type
+            from: ref.facfro.fac_name,
+            referring_type: ref.facfro.fac_type,
+            to: ref.facto.fac_name,
+            receiving_type: ref.facto.fac_type
         },
-        notes: ref.referral_notes?.map(note=>({
+        notes: ref.summary?.map(note=>({
             notes: note.note,
             noted_at: note.created_at
         }))
