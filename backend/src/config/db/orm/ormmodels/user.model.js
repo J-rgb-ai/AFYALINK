@@ -55,6 +55,9 @@ const User = sequelize.define('User', {
   photo: {
     type: DataTypes.BLOB('long')
   },
+  mime:{
+    type: DataTypes.STRING(50)
+  },
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
