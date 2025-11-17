@@ -4,6 +4,8 @@ import vertok from '../utils/jwt/verjwt.js';
 import models from '../config/db/orm/sequalize.js'
 import { genmail } from '../utils/mail/mailer.js';
 import { Op, where } from 'sequelize';
+import verotp from '../utils/otp/verotp.js';
+import gentok from '../utils/jwt/genjwt.js';
 
 
 
@@ -37,7 +39,7 @@ export const adminauth = async (req,res) =>{
     const token = ah.split(" ")[1];
     const decoded = vertok(token);
     const  adm = decoded?.id?.admin;
-    console.log(adm);
+    //console.log(adm);
     if(!decoded || !adm|| !adm.verified || !adm.email || !(adm.role === 'admin' || adm.role === 'iadmin')) return res.status(401).json({error:'Something fishy..did you smuggle this token?'});
     const storedo = await verotp(adm.id);
 
@@ -86,7 +88,7 @@ export const adminauth = async (req,res) =>{
     {
 
         console.log(err.message);
-        res.status(500).json({error: 'Could not authenticate admin for login'});
+        res.status(501).json({error: 'Could not authenticate admin for login'});
 
 
     }
@@ -178,15 +180,15 @@ export const admindash = async (req,res) =>{
      */
 
 
-     //kwanza apa paging inafaa ku happen for scalabiity
+     //kwanza apa paging inafaa ku happen for scalabiity apa ntahema na ma for loop wueh
 
      //fix circular imports
     
-     const allfac = await  Facility.findAll();
+     const allfac = await  Facility.findAll({attributes:{exclude:['photo']}});
      const allus = await User.findAll({attributes:{exclude:['password_hash']},where:{facility_id: facid}});
      const allstaff = await Staff.findAll();
-     const allpat = await Patient.findAll({include:[{ model: User, as: 'user', where:{facility_id:facid},exclude:['password_hash']}]});
-     const alldoc = await Doctor.findAll({include:[{model: User, as: ''}]});
+     const allpat = await Patient.findAll({include:[{ model: User, as: 'user_patient', where:{facility_id:facid},exclude:['password_hash']}]});
+     const alldoc = await Doctor.findAll({include:[{model: User, as: 'doctor', attributes:['id','fname','lname','gender']}]});
      const allsug = await Surgeon.findAll();
      const allnus = await Nurse.findAll();
      const altech = await Labtech.findAll();

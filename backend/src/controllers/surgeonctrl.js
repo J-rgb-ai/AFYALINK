@@ -166,7 +166,7 @@ try{
     if(!user || !doc || !sur || user.role !== 'doctor') return res.status(401).json({error:'Please let us be ethical. you are not a surgeon'});
     //me nmechoka man... idk why am even here in the first place
     
-    const fac = Facility.findAll();
+    const fac = Facility.findAll({exclude:['photo']});
     const pat = Patient.findAll({attributes:{exclude:['password_hash']}});
     const faci = user.facility_id;
     const fac1 = await Facility.findByPk(faci);

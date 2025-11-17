@@ -172,7 +172,7 @@ export const nursedash = async(req,res) =>{
 
 
     const getnr = await Referral.findOne({where:{reffering_user_id: ai}});
-    const faci = await Facility.findAll();
+    const faci = await Facility.findAll({exclude:['photo']});
     const getp = await Patient.findAll({attributes:{exclude:['password_hash']}}); //akuna kitu kaa hii nlimess
     if(!getnr) return res.status(200).json({nursep,patients:{getp}, facilities: {faci}, referrals: 'Seems like you have no referrals'});
 

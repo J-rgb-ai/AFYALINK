@@ -192,7 +192,7 @@ export const docdash = async(req,res) =>
 
         const getr = await Referral.findOne({where:{reffering_user_id:docid}});
         const getp = await Patient.findAll({attributes:{exclude:['password_hash']}});
-        const faci = await Facility.findAll();
+        const faci = await Facility.findAll({exclude:['photo']});
         //console.log('r    '+getr);
         if(!getr) return res.status(200).json({docp, patients:{getp}, facilities: {faci},Referrals:`Seems like you have no referrals Doctor ${conu.fname}`});
 

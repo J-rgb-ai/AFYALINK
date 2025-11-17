@@ -258,7 +258,7 @@ try{
     const {facid,update} = req.body;
     if(!req.file) return res.status(400).json({error:'Missing file'});
     if(!facid || !update) return res.status(422).json({error: 'Missing required fields',format: fori});
-    if(!(update === 'yes' || update === 'no')) return res.status(422).json({error:`update can only be of value yes/no and not ${update}`});
+    if(!(update === 'yes' || update === 'no')) return res.status(422).json({error:`update can only be of value yes / no and not ${update}`});
     const ah = req.headers['authorization'];
     if(!ah) return res.status(401).json({error:'Missing auth header'});
     if(!ah.startsWith('Bearer ')) return res.status(403).json({error: 'Invalid token format'});
@@ -266,9 +266,10 @@ try{
     const decoded = vertok(token);
     if(!decoded) return res.status(401).json({error:'Invalid token'});
     const adm = decoded?.id?.admin;
-    if(!adm || !adm.verified || !(adm.role === 'admin' || adm.role === 'iadmin')) return res.status(403).json({error: 'You are not ellgible to perform this action'});
+    //console.log(adm);
+    if(!adm || !adm.verified || !adm.hauth || !(adm.role === 'admin' || adm.role === 'iadmin')) return res.status(403).json({error: 'You are not ellgible to perform this action'});
     const usid = adm.id;
-    const user = User.findByPk(usid);
+    const user = await  User.findByPk(usid);
     if(user.disabled) return res.status(403).json({error: 'Your account was disabled on afyalink..please contact support'});
     if(!user.is_verified) return res.status(403).json({error: `${user.fname} is unverifed and so cannot perform this action`});
     if(!(user.user_role === 'admin' || user.user_role === 'iadmin')) 
@@ -294,7 +295,9 @@ if(isNaN(parseInt(facid))) return res.status(422).json({error:`facid must be an 
     if(!fac) return res.status(401).json({error:`No existing facility with id  ${facid}`});
     if(!fac.is_active) return res.status(403).json({oops:`${fac.fac_name} (${fac.fac_type}) is inactive at the moment`});
     //disable this during testing
-    if(user.facility_id !== facid) return res.status(403).json({error:`You can only make changes on your facility`});
+    //console.log(user.facility_id);
+    //console.log(facid);
+    if(user.facility_id !== parseInt(facid)) return res.status(403).json({error:`You can only make changes on your facility`});
 
     if(update === 'yes')
     {
@@ -348,7 +351,7 @@ export const facviup = async(req,res)=>{
     try{
     const fid = req.params.fid;
     if(isNaN(parseInt(fid))) return res.status(422).json({error:'Facility id must be an interger'});
-    const fac = Facility.findByPk(fid);
+    const fac = await  Facility.findByPk(fid);
     if(!fid) return res.status(404).json({error:`No such Facility`});
     if(!fac.photo) return res.status(404).json({error:`${fac.fac_name} (${fac.fac_type}) has no photo uploaded yet..`});
     const b64 = fac.photo.toString('base64');
@@ -372,5 +375,8 @@ catch(y)
 
 
 }
+
+//users update prof photo
+
 
 

@@ -92,7 +92,7 @@ try{
 
   await redis.set('ping','pong');
   const dated = await redis.get('ping');
-  if(dated)  console.log(chalk.red('Connected to redis........'));
+  if(dated)  console.log(chalk.red(`Connected to Redis on ${process.env.RED_PORT}`));
 
 }
 catch(err){
@@ -118,7 +118,7 @@ try{
   await sequelize.sync({alter:false});
   console.log(chalk.blue('Models synced'));
 
-  console.log(chalk.green('Connected to Database now'));
+  console.log(chalk.green(`Connected to database ${process.env.DB_NAME} on port ${process.env.DB_PORT}`));
 
 }
 catch(err){
