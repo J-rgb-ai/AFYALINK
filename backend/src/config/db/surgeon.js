@@ -1,6 +1,6 @@
-require('dotenv').config();
+/*require('dotenv').config();
 const createPool = require('./db');
 
-const surgdb = createPool(process.env.SURGEON, process.env.SURGEONPASS);
+const surgdb = await createPool(process.env.SURGEON, process.env.SURGEONPASS);
 
-module.exports = surgdb.promise();
+module.exports = surgdb.promise();*/

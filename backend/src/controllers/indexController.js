@@ -1,6 +1,8 @@
-exports.landingPage = (req, res) => {
+/*exports.landingPage = (req, res) => {
   res.json({
     status: "success",
     message: "Welcome to AFYALINK Backend 🚀"
   });
-};
+};*/
+
+
