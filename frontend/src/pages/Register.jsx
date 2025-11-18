@@ -15,7 +15,7 @@ const styles = {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: '40px',
     borderRadius: '12px',
-    width: '360px',
+    width: '400px',
     color: '#fff',
     boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
     fontFamily: 'Inter, system-ui, Segoe UI, Roboto, Arial',
@@ -74,10 +74,13 @@ const styles = {
 
 function Register() {
   const [formData, setFormData] = useState({
-    username: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phoneNumber: '',
-    idNumber: '',
+    gender: '',
+    facilityId: '',
+    dateOfBirth: '',
     password: '',
     confirmPassword: '',
     role: ''
@@ -122,10 +125,20 @@ function Register() {
         <div style={styles.title}>AFYALINK</div>
         <input
           type="text"
-          id="username"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
+          id="firstName"
+          name="firstName"
+          placeholder="First Name"
+          value={formData.firstName}
+          onChange={handleChange}
+          required
+          style={styles.input}
+        />
+        <input
+          type="text"
+          id="lastName"
+          name="lastName"
+          placeholder="Last Name"
+          value={formData.lastName}
           onChange={handleChange}
           required
           style={styles.input}
@@ -147,15 +160,40 @@ function Register() {
           placeholder="Phone Number"
           value={formData.phoneNumber}
           onChange={handleChange}
+          required
+          style={styles.input}
+        />
+        <select
+          id="gender"
+          name="gender"
+          value={formData.gender}
+          onChange={handleChange}
+          required
+          style={styles.select}
+        >
+          <option value="" disabled>Select Gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+        <input
+          type="text"
+          id="facilityId"
+          name="facilityId"
+          placeholder="Facility ID"
+          value={formData.facilityId}
+          onChange={handleChange}
+          required
           style={styles.input}
         />
         <input
-          type="text"
-          id="idNumber"
-          name="idNumber"
-          placeholder="ID Number"
-          value={formData.idNumber}
+          type="date"
+          id="dateOfBirth"
+          name="dateOfBirth"
+          placeholder="Date of Birth"
+          value={formData.dateOfBirth}
           onChange={handleChange}
+          required
           style={styles.input}
         />
         <select
