@@ -35,7 +35,7 @@ CREATE TABLE `audit_log` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `audit_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -93,7 +93,27 @@ INSERT INTO `audit_log` VALUES
 (45,NULL,'create','users',26,'New user created: Cyril Imbwaga (Role: refmanagertobe)','2025-10-20 20:57:40','2025-10-20 20:57:40'),
 (46,NULL,'update','users',26,'Role changed from \"refmanagertobe\" to \"refmanager\". ','2025-10-20 21:43:04','2025-10-20 21:43:04'),
 (47,NULL,'create','users',27,'New user created: Timon Opiyo (Role: doctor)','2025-10-21 20:33:17','2025-10-21 20:33:17'),
-(48,NULL,'create','doctors',1,'New doctor record created for user_id 27','2025-10-21 21:09:17','2025-10-21 21:09:17');
+(48,NULL,'create','doctors',1,'New doctor record created for user_id 27','2025-10-21 21:09:17','2025-10-21 21:09:17'),
+(49,NULL,'update','users',1,'Role changed from \"assign\" to \"refmanagertobe\". ','2025-10-24 13:34:56','2025-10-24 13:34:56'),
+(50,NULL,'update','users',6,'Role changed from \"nurse\" to \"refmanagertobe\". ','2025-10-24 13:34:56','2025-10-24 13:34:56'),
+(51,NULL,'update','users',7,'Role changed from \"admin\" to \"refmanagertobe\". ','2025-10-24 13:34:56','2025-10-24 13:34:56'),
+(52,NULL,'update','users',8,'Role changed from \"assign\" to \"refmanagertobe\". ','2025-10-24 13:34:56','2025-10-24 13:34:56'),
+(53,NULL,'update','users',11,'Role changed from \"nurse\" to \"refmanagertobe\". ','2025-10-24 13:34:56','2025-10-24 13:34:56'),
+(54,NULL,'update','users',26,'Role changed from \"refmanager\" to \"refmanagertobe\". ','2025-10-24 13:34:56','2025-10-24 13:34:56'),
+(55,NULL,'update','users',27,'Role changed from \"doctor\" to \"refmanagertobe\". ','2025-10-24 13:34:56','2025-10-24 13:34:56'),
+(56,NULL,'update','users',7,'Role changed from \"refmanagertobe\" to \"admin\". ','2025-10-24 13:36:09','2025-10-24 13:36:09'),
+(57,NULL,'update','users',27,'Role changed from \"refmanagertobe\" to \"doctor\". ','2025-10-24 13:36:39','2025-10-24 13:36:39'),
+(58,NULL,'update','users',11,'Role changed from \"refmanagertobe\" to \"nurse\". ','2025-10-24 13:36:54','2025-10-24 13:36:54'),
+(59,NULL,'update','users',8,'Role changed from \"refmanagertobe\" to \"patient\". ','2025-10-24 13:37:35','2025-10-24 13:37:35'),
+(60,NULL,'update','users',1,'Role changed from \"refmanagertobe\" to \"assign\". ','2025-10-24 13:38:06','2025-10-24 13:38:06'),
+(61,NULL,'update','users',26,'Role changed from \"refmanagertobe\" to \"refmanager\". ','2025-10-24 13:38:33','2025-10-24 13:38:33'),
+(62,NULL,'update','users',11,'Role changed from \"nurse\" to \"patient\". ','2025-10-24 14:27:41','2025-10-24 14:27:41'),
+(63,NULL,'update','users',6,'Role changed from \"refmanagertobe\" to \"refmanager\". ','2025-10-27 17:11:34','2025-10-27 17:11:34'),
+(64,NULL,'create','users',28,'New user created: Brian Marsello (Role: labtech)','2025-11-12 15:58:48','2025-11-12 15:58:48'),
+(65,NULL,'create','labtechs',1,'New lab technician record created for user_id 28','2025-11-12 16:08:37','2025-11-12 16:08:37'),
+(66,NULL,'create','labtechs',2,'New lab technician record created for user_id 28','2025-11-12 16:17:38','2025-11-12 16:17:38'),
+(67,NULL,'create','labtechs',3,'New lab technician record created for user_id 28','2025-11-12 16:21:46','2025-11-12 16:21:46'),
+(68,NULL,'update','users',28,'Facility changed from \"7\" to \"1\". ','2025-11-17 06:46:37','2025-11-17 06:46:37');
 /*!40000 ALTER TABLE `audit_log` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -215,6 +235,47 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `blockips`
+--
+
+DROP TABLE IF EXISTS `blockips`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `blockips` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `req_body` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`req_body`)),
+  `req_head` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`req_head`)),
+  `auto_block` tinyint(1) DEFAULT 0,
+  `hits` int(11) DEFAULT NULL,
+  `blocked_by` int(11) DEFAULT NULL,
+  `reason` varchar(900) DEFAULT NULL,
+  `ip` inet6 DEFAULT NULL,
+  `time` datetime DEFAULT NULL,
+  `decoded_tok` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`decoded_tok`)),
+  `req_meth` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `blocked` tinyint(1) DEFAULT 0,
+  `sent` tinyint(1) DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ip` (`ip`)
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `blockips`
+--
+
+LOCK TABLES `blockips` WRITE;
+/*!40000 ALTER TABLE `blockips` DISABLE KEYS */;
+set autocommit=0;
+INSERT INTO `blockips` VALUES
+(26,NULL,'{\"content-type\":\"application/json\",\"user-agent\":\"PostmanRuntime/7.49.0\",\"accept\":\"*/*\",\"postman-token\":\"358a8541-753e-41d0-98b3-1fcdf0453c1f\",\"host\":\"localhost\",\"accept-encoding\":\"gzip, deflate, br\",\"connection\":\"keep-alive\",\"content-length\":\"69\"}',1,43,NULL,NULL,'::1','2025-11-17 05:45:16','\"auth\"','GET','2025-11-17 05:45:16','2025-11-17 06:34:52',0,0);
+/*!40000 ALTER TABLE `blockips` ENABLE KEYS */;
+UNLOCK TABLES;
+commit;
 
 --
 -- Table structure for table `departments`
@@ -470,8 +531,9 @@ CREATE TABLE `facilities` (
   `is_active` tinyint(1) DEFAULT 0,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
+  `mime` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -482,10 +544,34 @@ LOCK TABLES `facilities` WRITE;
 /*!40000 ALTER TABLE `facilities` DISABLE KEYS */;
 set autocommit=0;
 INSERT INTO `facilities` VALUES
-(1,'Meru General Hospital','hospital','Meru Town','Kenya',NULL,'+254700111222','info@merugeneral.ke','MERU-HOSP-001',1,NULL,NULL),
-(2,'Kilimani Lab Services','lab','Nairobi - Kilimani','Kenya',NULL,'+254701223344','contact@kilimanilab.ke','NRB-LAB-002',1,NULL,NULL),
-(3,'Isiolo Specialist Clinic','specialist','Isiolo CBD','Kenya',NULL,'+254702334455','admin@isioloclinic.ke','ISIO-SPCL-003',1,NULL,NULL),
-(4,'Thika Road Family Clinic','clinic','Thika Road, Nairobi','Kenya',NULL,'+254703445566','hello@thikaclinic.ke','THIKA-CLIN-004',1,NULL,NULL);
+(1,'Meru General Hospital','hospital','Meru Town','Kenya','ÿØÿà\0JFIF\0\0\0\0\0\0ÿÛ\0„\0	( \Z\Z%!1!%)+...\Z383-7(-.-\n\n\n\r\Z-% %-/----------+--/.------/--------------------------ÿÀ\0\0Ã\"\0ÿÄ\0\0\0\0\0\0\0\0\0\0\0\0\0\0ÿÄ\0G\0\0\0\0!1AQ\"a2q‘¡±#BRÁÑğ3brCS‚’²áñc¢$ÃÒTstÂÿÄ\0\Z\0\0\0\0\0\0\0\0\0\0\0\0ÿÄ\0,\0\0\0\0\0\0\0\0\0!1AQa‘ğ\"q¡±BRÁÿÚ\0\0\0?\0Êwb—v*H®Å}iàwb—v*X¥v)wb¥ŠQ@ä)ÑNŠTÀlRŠtRŠ\0lRŠ|RŠ\0lRŠtRŠ\0lRŠŸ‡7@.Ê¢v– 	òÖ£+E« ­¬dRŠtWb€¢Ã@\r£SšÇz»«\\ÎÁW¹\07›¿\nŒÃ‡n8#!+i”î}f`<û 	õ{2ÄmU{4‚Nì\nQHS€­,ÌäRŠtRŠb¢ŸÈ E(§Å( Er)ñJ(‘JÚ\0QJ*^è×2TØè+±OŠ@S‘J*L´²Ğ\"”Sâ”P\"”Sâ”S‘]ŠtTØ;î\"LfeYé$	¤İn+9{«“æŞ^¹|yş%*©í¦®ÃA®¾!åQÅL^ïï¤Tº9eÙYYL2Té¡A×Më¸„†aÑˆÓ×\\4wî»îí–ËŸk”€u?héRç-ı\rEµ±]¢¯ğı’Ä¶áúšOş\0Õ•Å.åó¯$P>,OÊ³——…ËX}Ò)ŒÀW¢Xì¾wFr9³1ÿ\0L\n³Ãa-Û#»²‰ê\n	ö&¹åıB„ÙªñeÛ<Ë\rÃ¯\\ô-\\aÔ)ËşmªÚ÷¾¸V-á7]IHÏ»%›,¨\"+zNòGãñ 8èœ.#R~¢ï—ØjåŸ›95JããÆ<y¼®P¨ĞZ´º€$ª€[N´8–ôOÂg_U_p ‚àï##]z¸*§ËRòŞ½,héß£’pyëØWb¬RÈaÜ¨ñ5ñ‘ÙL¨·‰+A5¼f™“‹DqJ)ùie«$)EI–¹RŠ’+™hÈ¥OŠTqmSŸÄTËfÙä*i>T²W˜îH€áÓîŠŒáGAFE.èt¡M q@&ÚóˆÄpW–éHGÑLfHÓx0jC„j™°˜‡\n„ÜkjU1‘N¢DóƒÎtÚ5¢XU?Ô»E#áj6µ|œ?Äİ@N€f§úEœ~Ó“¯ çMùp]‹A¾Œ§uM6*ÚÛáVFÖçÌ’~şR¨Y€«êùVrş —kÅ}³g…^m­?¬ˆöVnËŞhÍ‘AÜ&?ÂøÖ¤6úû…HƒË—3ÿ\05Œ¼üGÂF‘ñb¹)°½™\nMö‡ŒÁB‚@3»f;€tŠ2ÇgğËı™cÕ‹|´_…X¡ÛQêèßsğü«›Z~Í´ãèV0È…´M>Èòàûkîı\Zé]NƒnuÉÛ_wèÖm·ÉiPƒo¹ø|4©\0ˆ:×²£A¾„ü>\ZS”G!ë¤”õ>áK/‘>³şôƒÿ\07»ôiÀLzGá@ëÙBñUœ=ígênì?‘¨Õµü¢†â—­­·K—í[Ì²ì«Y2vÖ€<7ü&şŸ’ÿ\0½^ğ,}»wr_\\É ô\" ‘ÌKmíå@qÜ%«a­ÚÄÛÄé‰{cÂ­ªåÜÌ|ê¸„6ßÃ\r–ìyÛÏ°VÏÅÜLÔ-S5ÖlÂ£PâçŞ–P\0*ù\0->/(ŠÚ4•³rÉ¶¬Á“»¸@Ì±•U+˜uî³Ãâ¨a>c¡æ+Òññó¶ÎL\\<´ˆ»ª‘m\n˜	å]].FTAÜÓZÕäf¡fè)&ÁÑt:×\ZÚõ©tğóÌŠ«^ÅOĞ!•LlùŠUVˆ¦o‰İA9³\06m~;üjÓ„q¤ºÁ&uÖ4íìëYû§ÂßÒiœø£ú_ı-_<±¦¸g­¦™³|}¶wõùÔMÆTN[ëv-ğUŒŸ¯×·ã\\a©õŸ×ëò¤ñfû\Z„WAÿ\0¾o‚ˆª>0OëŞëîş›³Súı{b¶u¯—ëáMÿ\0×ëş\"Ê ®¥û[zcñı~µÚ{yò‹àãëíWçúıAÚ€O&:ú¿*‹/—>f›;íìÖ¤6ôÔæÆ€Åñœ5½.b¬¯–uŸtÍ÷ù~Tà¾\\¹šÌâ»{ÃĞŸ®w?Èò\05Qˆı©ØÂÂ»·xÊ¿éÍEC³hÁ~÷@Ù{µQĞ-©ùT‹¨:1ø~Uå/ûNÆ\\•±bÚèXŒ¯pè5mÀĞ”îÑq‹±âº¾ê-±şl³ñ¢Ä{/vfræM‹â¶-e#«¨?^4Ü/zMË¬Dı«­psä…¾UÛ•Tº¶÷ˆÚF„I‚Ö…È9Šó1§ÂâÍg¦âûwÃÓ|Isÿ\0m]¾*\"©±?µ,*˜·bë‘Í²(ù“ğª`ƒÂvá$êQ°ê¤óV‹	û43&ÍµÒ<nÄíaˆøQ¿±)§Â)1_µ›äï\rm:/sßh,Ol¸µÖ(¥”‰‘jĞÆ ‘[ü?ìü«Û]ıbuc)åV\'±Öšù¼÷¯1$ì°îÄŒ¤e‰ÛÎ¥µì¥™ôxıäâwµ¹vöñt ÿ\0)aò¨‡dî€ìÌƒ%¶vŒÄè…µ Fñ¬×¹[ì–LÙÍ&aÙØIè¥  \"­0\\6Í±õvm¦€¨« h‚–hF~Ïšx~ĞmØ¼Üå-»x]«¢âøth29 ’?ò1_IbF‡úXh¯&í_c…Ğoáá.€Y—e¹\Z“ü¯ç±çÖˆÈ©DÈaÎ£ÍØû¤àWT[iYñŸ’ÖO‡ãC•Í£	òGÀÏãZ®@¶ò$çüz>YÇäpØ¡ÒšØ“Iòì¦\ZõTQÂäÆ±ó©-¸M3-s-6…dÏ‹<…ÌM?-s-\n)m‘å¥Re®S$¦¹è·šŸÆ¹Á4º\'OüC1m t‚7ÜmRöwˆ[Ş%m\\#2†ñe`³å­|Áí9%É¤·…¸Ş¶>¥1ï÷Tÿ\0¹o™9 ubëõåC^6à ß(j€(AÔA\ZÅ–…Û¡Zû–ÌÄ-öFl¡H˜€v¤NuÑh¼ )ñâ-)×@sµÓNSÊ£KØ$ ›æá@\nJ˜™‘¡ kÏ•QğĞªöÀTÚş “µ³ÔÄ×Vß×¢ÚG [¹™Qfî…ĞøLáã­1g9wµ˜Òì0¸{!Fx{vÂ†3$é :k@?â÷·]AKq¿%†­\rÌÑ‰F*ª‹bè%˜Û½>–RwzsçS¾9EÖ\rŠµİd9\ZØÌÎÀè`„ô¹Î” s}#{5Š»ü[Äó9Úãÿ\0‡Ÿ:›Ù;ivÂ]w=íÕXP«¡dY?xÖ‘ñ¨Jä{¬‡-·3®»Ü@7æSi¯áspı@%Õ5ÍoÄP#ËLÃjªDgŸef²¸`5ñ	‹¾„ø«lÃf h5$ÜX\Zu’}^t9ãLÂ¶\n}pìÜÁË:TäÇ5æ¹i®™ZUmZEÏ>ï¦Fı²åmá2ı1Akn±h1€P‚ÂHj.+bĞpØ‹ªn2É\n¤°\nÇ1(‚´ °*JÛl¤Kc™ÛPğü]µÂ†» îFEU3’Ö¾´é…ªà¶·ÚK2VÖ1[Æìû.a ŸU;ÚL@µnå¼=›NíuL¨bĞM\\‚tr=‚«ïâ‘í°_kD¨&Z\n…Ôí¥G‚µŠ\\5¡gY»ÜD‡¡A\\<•ĞÃk<¨­Æ›éİŸâ˜Û˜Û+rçÕ–iPˆdhÕDoq^æ¼ã‚`q«‹³qí¢ØS7‰¤Ÿ´w«zØ T¸  ™lË7Öj%ÑÑ„İ;^¢5ªÛüfĞ´owŠ-†Ê[]ºj;ZÓ­¶[ ­ÒùJ‰€‹™‰’4‚»Nâ†\'ø²õ#ìº[•26•àİª\\EÛvÒİÈrÀ±2‰`WMÄu(Œ?i-°Å˜ÍôtgA˜øÂ‚dÆÀøO©ªŸ‰¾Ş»]ñ÷èZ±5WXFüeXJ4?*ºìõî÷nëªæ`f“$hª³ÖT€rí¯§JÍÁÂN/§_AÚ’MWo†}[_eŠâÙc!–sÁq=â?xzêûÇvãùøT¼<†Á»fÑï IZĞëFí\"4é¹…Øº—2ZPA[¬m¡äıYLğ5ß5	Ûàâšrv\\\\Šîòİ@éª6ØÁó©»£Ò½U4ø8Úh)e©²W\nÓÌ*!ŠQS®‹G¥‚ˆ\"•OÜ\Zí,È2˜ş$GtÒ$xt7é¸½ã\ZıMÍm¸•u]µÔoçKˆÿ\0\r´ŸGa®â¥ìæYÜÃAµ\Z³eĞ‘ê¯›=I´¹,ğø›vûñ‘®‹ª¶ØŞ¿m²ƒ2T*fS§SQXÅ%«¡í[²­Ş8÷\nÑŞ6PHb6Š²Áà’²ÒGÙ^DÆµ+áw´ÂNíš5ç°)ø\0Ác¯–C&\nŞ’-%­×€J\r\"ååB=ÛÎnñü/9ïÒ\ZÑæÎkÖØ5‘–İı;Ë{÷w>Ê±\'ÏÊ€¹‰ºc66ÂÊ´‹v®?ß‚Zå¡ß•1ïBÀá€ºŠ2+w?4¿¯Œyó<Xaø5Ñù@R\0ƒRÜĞ‘Î„À*×ï]~ãâ[j²2ŞØ÷’Li¸Pö0ÖÖå»‚Ö)ŠA»tİÈÌ\r£êô¶Š\0´N¤®k²D.\Zu>£Ë•5l¥«øUUo)’O± &¡½Å]ÛwVÛÅyÌCğ¥ÅV;ı“R`¸»½ü4›>,B¯†Ò­HêH:AéA*ı…Ù³iTJD€gÀ ˜ŞA™åÎ’âÉïGÑ.2ª¼¹,Œ…€BçyØUgï[¥Oş¦èÕGÕ€ƒfû¬½>änòíÄgºŞÍ j9ªRUØg\nD|U„8[\n®ÖË\\.Â\\èOÙ¯R³ÙÌ-±•l L@‰ĞNÛÀ\ZùW›ğ>‡iiK¶yÈĞ¯òŠõ{­çJvmƒM[Ã[]*§íGú/uyP¶W‚‹»H*m>Ê¶/Aã°Iu´ı[f\0Ã,0æ5˜ê,9(ÊÚ¾ƒY+Te1œdâ0ä16~‘ˆÔ¢VAŞ) r÷qv¬âX´Av, —XBIœ¬C\rşÑ«_{€aİYŞu¸áØ31€\0¯‡Ñyõ©0ü\nˆÖÓo#e*1êÙ§1ĞoÒºÿ\0ºUşöéıv2Ñù0BqwhÀ©ºöÙBÈæ|ÛW\\;\0ö\r. ÷Ù‚*¹‚\'Xğ¬I‰#Î+Yoˆ¡QTrUU~@@åï¨ŞàëS/1ÿ\0j¥¿î¨¥‚»3øÚ¹kvštî4Qœ›j!I#f˜WÃ{7[=×uvÕÄ\"@d•* •?ÙÖ`G–»5¼:Ô–îùq¨^^\"T¾ÑWßÈô£÷õìh¾ö…¥Rİ²\\’LÉvEzk½e½¿:Ğ%ã÷OÀVfÍİH:çYÏâK4¹ú\rEER³€[¸{aû‹0ë¡ÒÚÀ=G‘êvª®„kW•\\(\ro”Ï†J˜(wGş^£MÉ­}U­2ıU­ô\r}»ûiÂØ>\0ˆaPu)5±\n[•=ŸH³”üG!¦~ĞëìŠ²ÈzĞ—0&ÙÊŒrê@cèÏ w#×M(ı~5éa~h§g$İ:h°Ì9ŠáE<‡¸mUÇ7]÷¦Éëî­4şHÔø,{±Óà)_?u·ı~ÿ\0ö§›ÇîŸó¢rGO…r¡ïF¥FV,Èó(ßVwİ|¹Šçgñ.ép°H‚IQgS©ñí®ñÈ`2ºFúÑ=fówˆ´£F$µ­\0Êt×_UxôvM´1[4¶%üj5wµ:tÒ ú9,¤YşĞ’Y¤Á+®„téV˜<f#9Ë€º\0u\\Å^%¥§ Ğ@çÌPæö3Ã6lÛ€9î\"¾¿tkÒ#óz ÁaÊÜ¶T=Ö\"Äfmİı\npë X,+\0uÍÓ/Q]ÁÛºÎ—.]°YÄ•Ñ£Áz&`@™\']Jnœ¡¸‚ÎEÄkéÁÒÒ4çÊ˜S\rÃàÏ|™Îğ˜äËto$ó©‡\0é¤r39¹åhl\r»|ñ7.7Ñ±.îIvL½Àdj\0çŠÏ\r±£dÅ?Äå¶ ú{˜}u1¿*\n™dØL:å\rrÜáà™<³ëî¦Ù{BşX(Ëô…˜ğsZûD1\ZŞ\nÈîÿ\0ô·4ØÜ¼<M¼[J›ƒÜ´—pÊ˜k*¢{Ë·HñYƒ±;n9\r(°Qù	ıã†¶º\"3dFa;7ÂˆÃq›OrâÉ—¼—e¡2i×§ºª7ÀĞ¸E9—ûû‰Ì	¦ôe¼mÆ7S=¶ğ‹nÚ\rÜäQó¢ÇHÑğÌfß²Ã1¹k/µ$©\Z¸Åzæo!í5å\\Åÿ\0¤áÉEŞYåNDH•ë–”pRI€zŠh¿¡R•¤©Rl7/™§_¯uJ¶õ¢Eš\0­{C¥FPHĞ{ªÆåjcZKhTë‡§%±Ô{èÅ™dŸY­Z•h{Ågî`˜±!yd~ºhM•\\70³oÄ_Â}-À–G€£m\\ô=\rI†á·B\"²/9Î„Q»XöşUDØÓ›ŞĞ£Ÿ„õº\0ó=²*+˜,:úx»c¯‰å]xS‚Š¶sÍI½‘z?QNï—¶(\\v;‡%·+´îªÅT]¶e€0°²u0().	Ö$©ßÖ:1[BPŸÎY£Ê.;ÁåM7‡Qğ r×rŠÓ\"#Sà/½õR¡;µëJ–DV£<ïŠ¥¾æYnÆø1\\½rÀ~t7‘ßÏ¥•Œ¤©Õí)Ÿ\"hî:ÄapùD™¸@?×şÔşÍ›™o¶ò)&L5¹:r\Zû«ËgD›GmaË1&Ñ\'½S.Ú€	×—Zæş¨AI2tºÆ#î£íâ1™€ú=µòøØ)Ë¦²×\0åÒ‡\\V&o£)9õ‰€\Zw¦w4ˆj^†ØÃ•¸³•[èø74¿UCO·€½Ä¢ÊjsG!ÔWp–n3—1rÿ\0GÄ	WSĞaˆ©ò;Õs£øghxJ¥âO§²6Ó˜ÚÓ-0¸b·r³±£İ…È9³N“O·ÙòÚ–f*¬<Ìæò=hl«bIÅa‡½ã	r@ñøb‰ÛÊ-³ŠÄ?ÕÜşÉLÿ\0_ıÆ£nBWÉpÜT¬–ğ6×V1°¡ìXKXŒ\"¨VœJ–%N{#“GMè4á¸rmiŠh\Zxm/Úc¯¥ñRğ<=‹WpÊ¶1qJTİº‚k#1QgQ¶’6:ë ÁGmÙ\" C7,î¹¾±\Z\Z\rIşm<¨ì=ëıÙV¸ÂB©<Õ•RŒ%ŒŒNêÊN|C	0úé–7>ú2ÕÅFºRİ»\'%É¹níÇ¸<@è;øøP7ìÕğ6¼nYf·”w–‰ğ¾‚TîOá^ƒvêõã|…›—\ZnÙŒÛÿ\01šö\\A¥#\\%VS/»”RÍ¦‘ËÚEOš“İP!Úi3ùòç­I©Ÿâı£l(V¼—\0bTe@uL’`iTØŸÚJ¨—˜yw`şQíª®Úp×¶@k½í¼ù—V9“!ŒnÀ™y\n¥ÆåL=’C™{Ú†UØZ1­³Ö³S“•UÉÑ£½ûM\'l=Òtôœ\rõA·íI	×ÒºçmN™CA}Ñ\nìÎ%-@Ì¤è‹ é]¹nÊ–`Ÿv~rôôÜò­^$,Ï;&~İbÚJáí®v@ûÃ™Ïú«‰w]ìX	œÛÑ5Í”77<\r†¹kœ èÀµÆ$J<QÈŸeÄ/ Á¯tN\"r²Úc ƒïD1!.94´¼F÷ê¹#*ÛÒ	^jz\Z‚ÿ\0â3c_P™‡úPUß	¶·,«2¡ °%±ÌtmËj#P4\\ËòjÖŒŞ+1øÜ^(˜leã >—pÊGZ#‡p«·1)iïb\ràŒÙ®˜\\ÙI’Lu­MÆéò_·<‡„Ëß¡ÒEÕ	ûCœS¤\ZÌ=¾Ëf¾í\\+Ş„.m’ræ‰ÌV6Ök¸Íx”5²êU9i¼sŠ.Ò¦ÿ\0kÿ\0rµö@Ì»î6S×Î(H%6ŒìŞKV.!P×àeÌ	”hœÂAFİ\rT`x•Ûo\Z×Ş/ez´ƒ¶L-Ë°åf36£BHØIõV_ˆö^í¯•»m\0—1+×Mè®Ñ¢Û—<¤[mX‰FºN½}utSÊ§Ãİ›VôşÍ=š\nskÊ»#ˆÒÜÂXi½rÒ¢c×J ´Ï2í\0\'\r†\0L÷š©˜**¸k,*/41•9DlA]ë[Æ»)u´K€÷hÒç\"/œı¶è~J’~·1æc¤}©Ûc ¯ÉÆ§•Ó·)ŒL å§ÇmaåJÖ€TSâäI\"zS¯‚à«¹È4ÎÛ©äh\\—2:Á,í–#®Ç^³\\Ë§õ¨3ƒlÚ›`÷7” K-Ğe-é\'\n½[b\Z\Zœßu<Ç:?†öGâCZ`m<}m¶9¡²BTëñ¨,p,m¥Î÷ğÌ bò±ÎDi¬ÓzìX“Jİ}IÓôA…Â°ºPÜnóè÷@Û6h3˜uãÃî\0\'}XñNm}/1î¦&`Ä‹ƒ0FóÃ;m¯º¢ø±à)ó(ô¾ükÒ9V‰ml8áîÜ!¥s\\-”NÑ:±êj,&	lßÂc8” Èâ²5ğùTà›Ì©Ê6\'R%wøò;r\'‡â¿±ãgúô\0Çˆ•kg,f\ZQ©;ÕGÈ“uD¼:ìí®Î®MEÈl§–òÿ\05GÃÁ[÷GtéïÖä`4ÏÊªpü?C]ƒ09¡F 4\r Ôó4j% ÎQNbo‚A\"A$.Q½[òb½‰aüšów.Z1+ŞØÓÄ>uéX†òùW`1vÃX#ÕÜêÙ¯3I)®Rà1ğ\r§ª·)Åq—-›¦Ú\"’Î­¬IĞ+4ˆzïµ5piÒÜ»½E`„øÀgs\Zl`­EÅñVÅ‡ïT²°\nUN¾-=•ç—»Qp0ƒh0$ænç¥®šÀ`\"u:ò§ñĞÜºˆŒ|AÎ¬F„ƒ¨\ZNÛü*%¸,Ëvâ‹,÷U®dU—w9Y•¦\ZrßRqî}­ZAbîd¹p0u~ì$l5*ÚèŒ7ÂÛn-²nZñ:í,Á‰9³Kk\Z‘øT–ûUd]rÁ¸±§yq‰RHl¾\"NM4SåçSÆ$J6ÊVkgº{E.*(!ÁT:Nºƒµu0wVæG[¨æUU­8Ye0³˜?f›Tíº‰yíÛV¸µ±sT©\r¶r=Zk7i;]ƒÄZ(ÎÚx’ÈÏ~¯¡öcB„[»¨Äğ1‚zLÙ¡XŒW]÷<Á­n?±x–²Úô1\\ğ–@\0ÃI/ãXk—å€sx–fVe$‚eeZgP`éG7íÒÚQe È˜1DIÖ	10:ÖĞü‹rrE¾A-ö‘U®¢•,|,ÄcË}*Wì^ \0«ŠÊ\0«ë©<ˆëğ¢ÏíËNTs}Ôï<ÅAÿ\0^),Ü0\'øc¨Şy×Fy&Ëİ“Äâò€ª5LÄÀdtn²×è¸Ø’À6`™`nÔ7²€ÿ\0­X‚F\Zö‘¦MLÿ\0ˆô®ÙÜ‚Fö„ËÌë±éñœ¤\nh±ÂvØ¼o›î[;8\0*€X“æt\'ËjƒØ«MuÉ¹t”i–qÌƒ\'ãB7m¯…,0w´ Do!Œÿ\0ıßˆª~)ÛœfåÖE²FbpX¨>Ë/QÊŒÒEeƒ5\\K‚½›KbÀR‹™‚»FrI¢#hÏZˆâ-âöîYfK 4iá™ÖWBFş|¦±_ıSÅ³MË6X¡Óâ]«oÀ¸ñÄ\ZÑ´áÊæÌ!¶\rvåFgØò.‰0äXlÃ(ñi®›é§º¦úš¬í=»«‡¼öKf!QdÁe\0™<ùĞ]œâWn(KÖî¡\0v³w]O‹E“§ &}zh±UÑ.4h$W+;‹í–Ûµ²ÌÅI„¬Ç8h#Û]£QR¤q“®«]»ÒY\0àÓM‡¬\Z‡Ç.¿„?t}Jß<ÚÎ¿U7´¼A£ƒhä@$;©S:zAµ\Zh5ª…{ıùW¹³ŞTË\0U`Ï]ëÆÓ›{\ZĞãÄY’å£ˆvGiÈIÊO„Ì\rÏ„ÀUa¼À‚­–\'A¸†*ß\rÀİğÌ\0\0÷€¬ìÀf\rªÌDitÜ?\0uqô‚¬¢bàÍ9v\\ÃpŞÏ]o_cÓ•XføK®à(9òÃ[$êÄ	¢#­Icˆ\\åy\"TÀ“ œÀóæE3‰\"‹1jå =¯qZéQ0ĞÀ\ZiD´áq¼\0B\Z’YµôIÔNçıÍg‰\'Â†÷®-˜Áiµ`më&¡ÅŒ¤/1¡\0Ï/àA:ó#Z.÷¹‡ºërÛ·d¹YÌKxe¬’cITÒ{ÔïE¶Ib¥	ÙŒó€IÒv¨ĞqVÖã‹i’¨‚°ÙfL™½6j{$–±9/+¯Ú¦tØ|hx¢ĞšJ€=9&DË.Ÿ:;ˆ´q¶’ÒÍ«x ™¤ıb¶Cê-å¥VîĞ±>A•\\â?/ ìtÕµåî©{‰¸X\0Ğ4IÜ±&4†µÅıl3È*š9:Á×Ğß@#”ùWqØæºÌ¢İÈp’CA+¬ÏIKòg¹>â3Xô”÷ëİ K0‰\ZH×Zßa8†RÀñ{BÜ…¹lw„8€3eñ0\'Òô½a¸M¥²–/~óé6µÎBÊ\0Ê„E¤y˜ÛJö%ƒ¶çÅmK\0r³[Í\0À\"HdÖĞÂqKrâxĞ±a0ö®å\'<¨ôc0$ÆÚ|h!dµÅ·$˜’s¸ZW§Zá7Zû­æ[–Ğ£K%¹ØÂ€eAìÜÕOj¸x7¬ä|¯zõË$Ì™B±0~tK\n÷‰ƒ´ÎUÚ	2NPF’}‘§¾ØQ9GS´Àƒ>Í¦½ÇKvû»Hª°@\n\0“IÉæk1Âû5Õ‚/:ZºAÈ‘˜œ¬áÖ¾À EGáÒ+*­ù<ïq‚­±>AÌ±\ZæÒV@Ö`s$ó®à™¨Í•×.¬5cy¥{5¾k!´Ê™Ì@ÎT2ÆI<³o¯ZÇ³Œ65ƒ¹k\n×n4÷f$ë–¯FŞæxŠ‘f£êCdríwÄ$mi5á8‹†êŒì}1é>\0:ÆùG¬Ö¯ân+áeÈJD\0| €ußÛYî	‡¸¸›lP¡RX$†VA#r¤D=•·¤ˆÃ‹¦\\6$É€DÈg¡×Bi—¯îS¦²Ë¶šèi—îìsf%L’ˆ=Ê j\0€6åP…}fÊú´æT—¤iWfn)J†àÀ³eô†ğ~ğü©è|-ªzKÊy6q/s»Ë9R%É- eËk?*ªÁc±·àC…sY´™óáÁ\'Oö¤›¢œm—Š€#xÖI]aú?E§â±6Ü=¶·&	.œÙ‚G-·×óªÇ>eh]´%¬ÙQ\\Í¯weÚ®ÂÀ³ecnÑ ¢NIFƒ‘L¨Ã)œáœ µüŒ%Q‰s® D\rG>ºô>fõµ¿Š[9‘m6RÄC2™ËÔ\r˜Ş„Áá´Yf773”HRc^ºùÑ+·U®Ú,İÙÃ\\p¾ ™¥@0t˜Íñ¥{š.	mŞ½ÃZº—>ŠÁİµœ·„²A`Ë¡Ş=T\ZâØü0÷ƒ±kr¥­Y2½”c%Nm.}­~ueƒ£án•\\ÆÙ¾áG=K…øÅÆÙ¯ÙK¶¼/ÜæÊVY3µ—$Îš>ZŠRtŠ£øÌKÆõÆ$™e.A3©\"=ZR¢^ş)ÎkwN]•´uğÜ\Z\r³†ƒÌA¥Xæ_%d4ëÁîâm;\\Ä\\±İZœ¨Ø…ó1+1t‚–$ ¼ùî‰0üÌV«Àns&%Í·%{·\0\Z%ÓO>•Û`&Û(|Èeƒ6R£ÅêP70K¢º,cµá)‚Íü:‹Åm¾l½ãÂ1r“¬}¼èK—Ö÷ˆå2|E\Zé÷ˆh÷~c[w³×MËfû-ËvË²ÚúÓ«ë¡`B€I€\0ŞwÖ©¸ç\nT,ëqÑwÒÒ€ºĞY†„ÉˆÒh$WOFvïFHËY<õ5&­‡Û7x\n@œ¤í:G=º\Z=;5ˆh\'n »:‰\0iV¸rÕ»–ûÀÂìIî¯9ĞDòöU¨—ÈÂ\r«·™n½å7nğå@@\0€\"4üêÓˆ×”¹UC-$xrÈÊ[_3Öh~€EÛå-nÛ\0BX }*_£[îÊÜ¾3Bd»tÈ%AğòéÍ{ît:Ú€í=œZ„l:}]nª„‹a‰¶ì±·–ÕoÃ._Å7u‡B±f!­¾Shx\\ËIŒË;ïCá°x{.D—f[zSÂÂŠÍµ±{½¶ÆÄimÅ°R!”Q­8Î	‘$Úâ¸u±x%ÆenğÊ¤€@Vy.şÙåBamÃ3[5;&vË¬–òß•Y}í-šã®Ä±¼h.eæyV—‡ãÒç¾ìåDîDœÚêO¾®Xé°Ê,oÅ]³lwe«¥‘M›áe,EÖvl°s·)?,ßâ˜”b.^Ä«úFq!w ßJôG¾d5«+ë¸Ÿ*£ÄğÕv.ö°ìÌæ¹:rÑH¬£—_±R…ƒğ)ÄQ‘í¥Û’%íÜ¸2Ï„øµ#Ò‚§—²´w1Wn÷nmd‰[¤¬ZQaA™]`ÎúU*3!ğŞ¶šEî¤\0 ë\0<é£ÿ\0ıÌÃ\r¿ \0:ó©xÖÊŠ6\\?´Fr„’„IÉ¨ğ\\QíaìHKNAbÀ\0\"â~`VH3hU˜±$Ê÷–Î¤ëš\Z}^{×oa„bêÆíÅ#Õ”	öRÔ}#fÊßmm³¨‘3g\0‚3Nb#FhßÈæ2Û–Ğê:è}sX‹\\.Øû7=bÒSışÖò&Øü4¥ªı±cxIGÕÉl­\0H-ÛÈAûÑ–†|+œª$°ĞnIÎµ4QÃ\rÎ‡®ğü©£à†EÈAMÂÑùùü*0e(]ï÷ú8¸ÎQŒRáWîËÎŞl3ºÜ·Ê¤ \'Qï5t½ QöóåÎ³e®–ÆÛ8R¡®f\0î\'Î>»ß];Ü¶=K?…m©ğÎj¢ã\rÚ\0	ğ\'™êŸ‰4bö„ÿ\0sYAe¦{öùDo³y\nkY]ÍËŒz“™øÑ¾˜[v›şÒÿ\0™GãUØ®0‹\0¨OšQUBÿ\0@¾[˜øÓû×ûUŒ>×¸¬Yo™\"-³¦üæ¤½Åúm&\nìƒ$ÌzÎÕPq¨÷/åMïÏßAìSKe¸f¾ÊÄ“\ZÌÉ`°\Z/¶QêQóŠ¿^w@=BëòÔyW=Wíæõ(ã¡÷\nNpö‰Ì1†•\0Ü_¢ó(ø4©jÀ3/e†rØ‹ohdægºgAëÚ»s‰^ç‰Uş›~\'J»N¬Çsÿ\0§dµ÷GŞ¿ÔMKRfƒ®ãA ¾-É¥gº lFúW.ÜLÿ\0üÑ”mmG©T|…9otùÒÉ!\rµ¶º[ÃÜÿ\0#ğ§œeÃ¶\Z?ü—çK¿>T×¸ğ}`<’}…œk—ˆaÜØYá\'QäM:å¼Ch×- øPèT†/P+‚è\Z¡!]ï}f\'ì-6oN%ÄHĞÓÌt`gW¼ì«óšî*écÒ)é ´!ƒIôÜ™¿%ñƒ²>É>×üêÄ¨İÔ{EDqöÿ\0¼÷ùTåÃ\\Ğ³$\Z¶mìÇ¸~3]„[Qì_Ê«[‰ÛêÇÙùšŒñEä„ûEğœÑlo‹Ké>:¥~(y\"ûæ£n&şKì–¼:ˆ½7Ïè\nêÜ<øVu±®~Û{$|ª6ºNäŸ\"I©~D}TÒ5ò7 zÚ*Æ¾¾ÂOÊ¨’Ë†oP$ü(¥á·cømë /ú¢—â$øA¾ƒ›ˆ/Ş\'ÔãQ7^ŒÊ?\Z„pkšÈ=m·ù©“‚“v¥Iÿ\0Qµ1Xÿ\0;è‰¸ŸòÇø¿Ú¢n\"İÄş5ck„[èçÚ\0>À?\Z%8zËif5“šO©:Å|±ä—²ˆãOQî_Æól|Â˜÷Z$´ÃÑÈ¾¡§¸]dØş½sOJO–Ã\'ÉB¸äíÔëò™©µvØ|MøE\\0OÑ5ÃqG!î¦¼uØd‰Yû˜i7¿¥#ã4ïİh7W>³ÿ\0ÄiG¶$ÔfñëV°#èu@éÃíÿ\0vú¿Nú%¡ıØÿ\0?:ycÖšMZÂŠè6ô;ºN£ü«ùR¨ä~¢•<‘V¨ûÃÖ•*¡ÌiÜ©R gR¤ZT©Ëì@‘U-Ä.}ïp¯AJ•qcI§Éœãçwoy¨œéJ•avH­Ÿ×²ºæ•*h‡ÁÅ>(õT™Y¥J€PNÜªK(4®Ò ¤i0<&ÉY)\'Öß)Š#…¶€å¶€yTŸy©WjŠ£§\r\"ıŒxŒt\Zp¦¶Äú¿\nT¨F¬šÕ±NB¥Ê)R­“\Zæ¢g4©U \"w5Ò¥L‘µŞt©Pr•*\0a4ßÎ•*t-*T©ÿÙ','+254700111222','info@merugeneral.ke','MERU-HOSP-001',1,NULL,'2025-11-17 06:32:23','image/jpeg'),
+(2,'Kilimani Lab Services','lab','Nairobi - Kilimani','Kenya',NULL,'+254701223344','contact@kilimanilab.ke','NRB-LAB-002',1,NULL,NULL,NULL),
+(3,'Isiolo Specialist Clinic','specialist','Isiolo CBD','Kenya',NULL,'+254702334455','admin@isioloclinic.ke','ISIO-SPCL-003',1,NULL,NULL,NULL),
+(4,'Thika Road Family Clinic','clinic','Thika Road, Nairobi','Kenya',NULL,'+254703445566','hello@thikaclinic.ke','THIKA-CLIN-004',1,NULL,NULL,NULL),
+(5,'Kitale Heart & Wellness Centre','specialist','Kitale Town','Kenya',NULL,'+254729111222','heart@kitalewellness.co.ke','SHA-009',1,NULL,NULL,NULL),
+(6,'Isiolo County Diagnostic Lab','lab','Isiolo CBD','Kenya',NULL,'+254730333444','lab@isiolocounty.go.ke','SHA-010',1,NULL,NULL,NULL),
+(7,'Naivasha Family Clinic','clinic','Naivasha Town','Kenya',NULL,'+254731555666','info@naivashafamilyclinic.co.ke','SHA-011',0,NULL,NULL,NULL),
+(8,'Kakamega Regional Hospital','hospital','Kakamega Central','Kenya',NULL,'+254732777888','admin@kakamegaregional.go.ke','SHA-012',1,NULL,NULL,NULL),
+(9,'Voi Medical & Imaging Lab','lab','Voi Town','Kenya',NULL,'+254733999000','support@voimedlab.co.ke','SHA-013',1,NULL,NULL,NULL),
+(10,'Ngong Road Specialist Hub','specialist','Ngong Road, Nairobi','Kenya',NULL,'+254734111333','hub@ngongspecialists.co.ke','SHA-014',1,NULL,NULL,NULL),
+(11,'Kericho Wellness Clinic','clinic','Kericho CBD','Kenya',NULL,'+254735444555','hello@kerichowellness.co.ke','SHA-015',0,NULL,NULL,NULL),
+(12,'Marsabit County Referral Hospital','hospital','Marsabit Town','Kenya',NULL,'+254736666777','referral@marsabithealth.go.ke','SHA-016',1,NULL,NULL,NULL),
+(13,'Lamu Coastal Health Centre','clinic','Lamu Town','Kenya',NULL,'+254737111222','info@lamuhealth.co.ke','SHA-017',1,NULL,NULL,NULL),
+(14,'Bungoma County Imaging Lab','lab','Bungoma CBD','Kenya',NULL,'+254738333444','lab@bungomaimaging.go.ke','SHA-018',1,NULL,NULL,NULL),
+(15,'Nanyuki Specialist Hospital','specialist','Nanyuki Town','Kenya',NULL,'+254739555666','contact@nanyukispecialist.co.ke','SHA-019',1,NULL,NULL,NULL),
+(16,'Embu Family Wellness Clinic','clinic','Embu CBD','Kenya',NULL,'+254740777888','hello@embuwellness.co.ke','SHA-020',0,NULL,NULL,NULL),
+(17,'Taita Taveta Regional Hospital','hospital','Wundanyi, Taita Taveta','Kenya',NULL,'+254741999000','admin@taitatavetahealth.go.ke','SHA-021',1,NULL,NULL,NULL),
+(18,'Kajiado County Referral Lab','lab','Kajiado Town','Kenya',NULL,'+254742111333','support@kajiadolab.go.ke','SHA-022',1,NULL,NULL,NULL),
+(19,'Nyamira Specialist Hub','specialist','Nyamira CBD','Kenya',NULL,'+254743444555','hub@nyamiraspecialists.co.ke','SHA-023',1,NULL,NULL,NULL),
+(20,'Migori Wellness Clinic','clinic','Migori Town','Kenya',NULL,'+254744666777','hello@migoriwellness.co.ke','SHA-024',0,NULL,NULL,NULL),
+(21,'Turkana Desert Medical Centre','clinic','Lodwar, Turkana','Kenya',NULL,'+254745111222','info@turkanamedical.co.ke','SHA-025',1,NULL,NULL,NULL),
+(22,'Baringo County Referral Lab','lab','Kabarnet Town','Kenya',NULL,'+254746333444','lab@baringocounty.go.ke','SHA-026',1,NULL,NULL,NULL),
+(23,'Nyeri Highlands Specialist Hospital','specialist','Nyeri CBD','Kenya',NULL,'+254747555666','contact@nyerispecialist.co.ke','SHA-027',1,NULL,NULL,NULL),
+(24,'Siaya Family Health Clinic','clinic','Siaya Town','Kenya',NULL,'+254748777888','hello@siayahealth.co.ke','SHA-028',0,NULL,NULL,NULL),
+(25,'Narok Regional Hospital','hospital','Narok CBD','Kenya',NULL,'+254749999000','admin@narokregional.go.ke','SHA-029',1,NULL,NULL,NULL),
+(26,'Tana River Diagnostic Lab','lab','Hola, Tana River','Kenya',NULL,'+254750111333','support@tanariverlab.co.ke','SHA-030',1,NULL,NULL,NULL),
+(27,'Laikipia Specialist Hub','specialist','Nanyuki, Laikipia','Kenya',NULL,'+254751444555','hub@laikipiaspecialists.co.ke','SHA-031',1,NULL,NULL,NULL),
+(28,'Kwale Coastal Wellness Clinic','clinic','Ukunda, Kwale','Kenya',NULL,'+254752666777','hello@kwalewellness.co.ke','SHA-032',0,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `facilities` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -756,7 +842,7 @@ CREATE TABLE `labtechs` (
   UNIQUE KEY `license_no` (`license_no`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `labtechs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -766,6 +852,8 @@ CREATE TABLE `labtechs` (
 LOCK TABLES `labtechs` WRITE;
 /*!40000 ALTER TABLE `labtechs` DISABLE KEYS */;
 set autocommit=0;
+INSERT INTO `labtechs` VALUES
+(3,28,'LAB-KE-2025-0098','BSc Medical lab','Microbiology',5,'2025-11-12 16:21:46','2025-11-12 16:21:46');
 /*!40000 ALTER TABLE `labtechs` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -1516,19 +1604,25 @@ CREATE TABLE `referrals` (
   `priority` enum('Routine','Urgent','Emergency') DEFAULT 'Routine',
   `referral_hash` varchar(255) DEFAULT NULL,
   `blockchain_tx_id` varchar(100) DEFAULT NULL,
-  `status` enum('sent','received','accepted','completed','rejected','approved','tobeapproved') DEFAULT 'tobeapproved',
+  `status` enum('accepted','approved','tobeapproved','rejected','completed','processing','suspended') DEFAULT 'tobeapproved',
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `req_date` datetime NOT NULL,
+  `need_date` datetime DEFAULT NULL,
+  `sched_date` datetime DEFAULT NULL,
+  `visit_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `patient_id` (`patient_id`),
   KEY `reffering_user_id` (`reffering_user_id`),
   KEY `reffering_facility_id` (`reffering_facility_id`),
   KEY `receiving_facility_id` (`receiving_facility_id`),
+  KEY `rf_visits` (`visit_id`),
   CONSTRAINT `referrals_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   CONSTRAINT `referrals_ibfk_2` FOREIGN KEY (`reffering_user_id`) REFERENCES `users` (`id`),
   CONSTRAINT `referrals_ibfk_3` FOREIGN KEY (`reffering_facility_id`) REFERENCES `facilities` (`id`),
-  CONSTRAINT `referrals_ibfk_4` FOREIGN KEY (`receiving_facility_id`) REFERENCES `facilities` (`id`)
+  CONSTRAINT `referrals_ibfk_4` FOREIGN KEY (`receiving_facility_id`) REFERENCES `facilities` (`id`),
+  CONSTRAINT `rf_visits` FOREIGN KEY (`visit_id`) REFERENCES `visits` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1805,7 +1899,7 @@ CREATE TABLE `users` (
   `email` varchar(100) DEFAULT NULL,
   `phone` varchar(20) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
-  `user_role` enum('doctor','nurse','patient','admin','iadmin','refmanager','refmanagertobe','assign') DEFAULT 'assign',
+  `user_role` enum('doctor','nurse','patient','admin','iadmin','refmanager','refmanagertobe','assign','labtech') DEFAULT 'assign',
   `gender` enum('Male','Female','Bi-sexual','Lesbian','Homosexual','They/Them and other shenanigans') DEFAULT NULL,
   `dob` date NOT NULL,
   `age` int(11) DEFAULT NULL,
@@ -1814,12 +1908,16 @@ CREATE TABLE `users` (
   `facility_id` int(11) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
+  `disabled` tinyint(1) DEFAULT 0,
+  `dis_res` varchar(500) DEFAULT 'Did something bad and account was dissabled',
+  `no_dis` int(11) DEFAULT 0,
+  `mime` varchar(50) DEFAULT '/image/jpeg',
   PRIMARY KEY (`id`),
   UNIQUE KEY `phone` (`phone`),
   UNIQUE KEY `email` (`email`),
   KEY `facility_id` (`facility_id`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1830,13 +1928,14 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 set autocommit=0;
 INSERT INTO `users` VALUES
-(1,'Test','User','testuser@example.com','+254700000000','$2b$10$6QDmuCgwkbUiln5ORiBZFusthUxMRgePkzIFx.TsLAGdAG0JlZZn.','assign','Male','2005-02-13',20,NULL,0,NULL,'2025-10-13 14:16:26','2025-10-19 14:09:20'),
-(6,'Jane','Doe','janedoee@gmail.com','+254712645612','$2b$10$cWwvzkgqrXmlaxVVOmBlpeprG.kZ2SX4h29zV1BmccCY8tfUoASEC','nurse','Female','1982-02-13',43,NULL,0,1,'2025-10-13 15:13:17','2025-10-13 15:13:17'),
-(7,'Judas','Iscariot','biggymatope@gmail.com','+254712440129','$2b$10$WucPSPMbwjeCKsJOr486sutctbnTSD57HJWxQlFEaSEJtb4NMrUma','admin','They/Them and other shenanigans','1975-02-13',50,NULL,1,1,'2025-10-13 15:19:26','2025-10-17 10:14:03'),
-(8,'John','Otieno','johnotieno@gmail.com','+254712345678','$2b$10$JyWWBi/fr.s6CmizRTI1uewn/MdVw3Fbdye/HXsGSdsRIgoMOiRm.','assign','They/Them and other shenanigans','1975-02-13',50,NULL,1,1,'2025-10-14 07:14:55','2025-10-14 07:14:55'),
-(11,'Ian','Otieno','ianotieno@gmail.com','+254712945345','$2b$10$/C7czEFbAhJ/Kxgwe5bzOOkS8LePpOSMVSv7ndbD61BvpNO4LvNsa','nurse','They/Them and other shenanigans','1945-02-13',80,NULL,0,2,'2025-10-14 07:26:32','2025-10-14 07:26:32'),
-(26,'Cyril','Imbwaga','cyroimbwaga@gmail.com','+254712944632','$2b$10$fRWXxwWY95AiiZamrWGKWubPGGn7UB14SiqI5TmTZlV/1KOLxTEJu','refmanager','Male','1973-02-13',52,NULL,1,1,'2025-10-20 20:57:40','2025-10-20 21:43:04'),
-(27,'Timon','Opiyo','opiyotimon54@gmail.com','+254746154642','$2b$10$Ze8BcdfRlruIHV6HW3uTPOzCD0z9RQO7cchPPce.pRbCw0znpQ0PK','doctor','Male','2004-02-13',21,NULL,1,2,'2025-10-21 20:33:17','2025-10-21 20:33:17');
+(1,'Test','User','testuser@example.com','+254700000000','$2b$10$WucPSPMbwjeCKsJOr486sutctbnTSD57HJWxQlFEaSEJtb4NMrUma','assign','Male','2005-02-13',20,NULL,0,NULL,'2025-10-13 14:16:26','2025-10-19 14:09:20',0,'Did something bad and account was dissabled',0,'/image/jpeg'),
+(6,'Jane','Doe','janedoee@gmail.com','+254712645612','$2b$10$cWwvzkgqrXmlaxVVOmBlpeprG.kZ2SX4h29zV1BmccCY8tfUoASEC','refmanager','Female','1982-02-13',43,NULL,1,1,'2025-10-13 15:13:17','2025-10-27 17:11:34',0,'Did something bad and account was dissabled',0,'/image/jpeg'),
+(7,'Judas','Iscariot','biggymatope@gmail.com','+254712440129','$2b$10$WucPSPMbwjeCKsJOr486sutctbnTSD57HJWxQlFEaSEJtb4NMrUma','admin','They/Them and other shenanigans','1975-02-13',50,NULL,1,1,'2025-10-13 15:19:26','2025-10-17 10:14:03',0,'Did something bad and account was dissabled',0,'/image/jpeg'),
+(8,'John','Otieno','johnotieno@gmail.com','+254712345678','$2b$10$JyWWBi/fr.s6CmizRTI1uewn/MdVw3Fbdye/HXsGSdsRIgoMOiRm.','patient','They/Them and other shenanigans','1975-02-13',50,NULL,1,1,'2025-10-14 07:14:55','2025-10-14 07:14:55',0,'Did something bad and account was dissabled',0,'/image/jpeg'),
+(11,'Ian','Otieno','ianotieno@gmail.com','+254712945345','$2b$10$/C7czEFbAhJ/Kxgwe5bzOOkS8LePpOSMVSv7ndbD61BvpNO4LvNsa','patient','They/Them and other shenanigans','1945-02-13',80,NULL,1,2,'2025-10-14 07:26:32','2025-10-24 14:23:19',0,'Did something bad and account was dissabled',0,'/image/jpeg'),
+(26,'Cyril','Imbwaga','cyroimbwaga@gmail.com','+254712944632','$2b$10$fRWXxwWY95AiiZamrWGKWubPGGn7UB14SiqI5TmTZlV/1KOLxTEJu','refmanager','Male','1973-02-13',52,NULL,1,1,'2025-10-20 20:57:40','2025-10-24 13:38:33',0,'Did something bad and account was dissabled',0,'/image/jpeg'),
+(27,'Timon','Opiyo','opiyotimon54@gmail.com','+254746154642','$2b$10$Ze8BcdfRlruIHV6HW3uTPOzCD0z9RQO7cchPPce.pRbCw0znpQ0PK','doctor','Male','2004-02-13',21,NULL,1,2,'2025-10-21 20:33:17','2025-10-21 20:33:17',0,'Did something bad and account was dissabled',0,'/image/jpeg'),
+(28,'Brian','Marsello','bee2honey@protonmail.com','+2547125645678','$2b$10$plEJofcJkL5Opaww1Nn3V.8WUhpWRFuw7qrQ.8qzIKgD.QK4gJYeG','labtech','Male','1992-08-15',33,NULL,1,1,'2025-11-12 15:58:48','2025-11-12 16:01:54',0,'Did something bad and account was dissabled',0,'/image/jpeg');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -1958,10 +2057,14 @@ CREATE TABLE `visits` (
   `referred_patient` tinyint(1) DEFAULT 0,
   `visited_at` timestamp NULL DEFAULT current_timestamp(),
   `revisited_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `referral_id` int(11) DEFAULT NULL,
+  `infacility` tinyint(1) DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `patient_id` (`patient_id`),
   KEY `facility_id` (`facility_id`),
   KEY `server_id` (`server_id`),
+  KEY `fk_visits` (`referral_id`),
+  CONSTRAINT `fk_visits` FOREIGN KEY (`referral_id`) REFERENCES `referrals` (`id`),
   CONSTRAINT `visits_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   CONSTRAINT `visits_ibfk_2` FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`),
   CONSTRAINT `visits_ibfk_3` FOREIGN KEY (`server_id`) REFERENCES `users` (`id`)
@@ -2094,4 +2197,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2025-10-24  0:58:01
+-- Dump completed on 2025-11-18 23:29:48
