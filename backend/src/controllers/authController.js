@@ -99,6 +99,7 @@ import redis from '../config/redis/redis.js';
 //import Labtech from '../config/db/orm/ormmodels/labtechs.model.js';
 import { format } from 'morgan';
 import models from '../config/db/orm/sequalize.js';
+import { Op, where } from 'sequelize';
 
 const{User,Facility,Doctor,Patient,Nurse,Surgeon,Labtech} = models;
 
@@ -163,6 +164,15 @@ if(!req.body) return res.status(403).json({error: 'Missing request body', format
     const valemal = emailreg.test(email);
 
     if(!valemal) return res.status(400).json({error: 'Invalid email format'});
+    const fcin = parseInt(facility_id);
+    if(isNaN(fcin)) return res.status(422).json({error: 'Facility id must be an integer only'});
+    const facok = await Facility.findByPk(facility_id);
+    if(!facok) return res.status(404).json({error:'No such facility with that id'});
+    if(!facok.is_active) return res.status(403).json({error:`Facility of id ${facility_id} is not active at the moment`});
+    const anin = await User.findOne({where:{facility_id: facility_id,user_role: 'admin'}});
+    if(!anin) return res.status(400).json({error:'Please intialize system first before user creation'}); 
+    const cha = await User.findAll({where:{facility_id: facility_id,user_role:{[Op.in]:['admin','iadmin']}}});
+    if(cha.length >= 2) return res.status(422).json({error:'Missing user role'});
 
     if(user_role === 'admin' || user_role === 'iadmin') return res.status(401).json({warning: 'You have no such privileges'});
 
@@ -528,14 +538,60 @@ const checkm = emailreg.test(email);
 if(!checkm) return res.status(401).json({error: 'Please enter a valid email '});
 
 const user = await User.findOne({where: email ? { email } : { phone }});
+const t0x56 = new Date().getTime();
+const dt0x56 = user.dis_un;
+const d0x56 = t0x56 - dt0x56;
+const m0x56 = Math.floor(d0x56/(1000*60));
 
 
 if(!user) return res.status(404).json({error: 'User with those details not found'});
+
+if(m0x56 > 15)
+{
+  user.wrong = 0;
+  user.disabled = false;
+  await user.save();
+}
+
+
+if(user.disabled) return res.status(403).json({error:`Account was disabled please wait for ${m0x56} minutes`});
+
 const passhash = user.password_hash;
 
 const verify_user = await bcrypt.compare(password,passhash);
 
-if(!verify_user) return res.status(401).json({error: 'Invalid details..'});
+
+
+if(user.wrong > 5){
+  const t0x4 = new Date().getTime() + (15*60*1000);
+  user.dis_res = 'Too many incorrect login attempts';
+  user.dis_un = t0x4;
+  user.disabled = true;
+  const l0x566 = user.no_dis;
+  user.no_dis = l0x566 + 1;
+  await user.save();
+
+  return res.status(403).json({error: `Too many login attempts please try again after ${Math.floor(t0x56/(1000*60*60))} minutes..`})
+
+
+}
+
+
+
+if(!verify_user) {
+  
+   const i0x45 = user.wrong;
+   user.wrong = i0x45 + 1;
+   await user.save();
+
+  return res.status(401).json({error: 'Invalid details..'})
+}
+
+if(verify_user) {
+  user.wrong = 0;
+  await user.save();
+}
+
 
 const facid = user.facility_id;
 
@@ -1305,7 +1361,447 @@ export const resetpass = async (req,res) =>{
   }
 
 
+
 };
+
+
+
+//admin created at system init....
+
+//activate or inactivate facility
+//create admin fromhere..
+//check if fac already got an admin..
+//if facility not intialized 
+//facility got no users
+//web scoets for chats ..God damn
+
+
+
+export const sysinit = async (req,res) =>{
+
+try{
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+catch(ii)
+{
+  console.log(ii.message);
+  return res.status(501).json({error:'Could not intialize system'});
+}
+
+
+
+};
+
+//man i dont feel like doing this shii...
+
+export const prous = async(req,res) =>{
+
+  try{
+    if(!req.file) return res.status(422).json({error: 'Please select a photo file'});
+    const prof = req.file;
+    const ah = req.headers['authprization'];
+    if(!ah) return res.status(401).json({error:'Missing auth token'});
+    if(!ah.startsWith('Bearer ')) return res.status(422).json({error:'Invalid token format'});
+    const token = ah.split(' ')[1];
+    const decoded = vertok(token);
+    if(!decoded) return res.status(401).json({error:'Invalid or expired token'});
+    const dc = decoded?.id?.doctor;
+    const sj = decoded?.id.surgeon;
+    const ns = decoded?.id?.nurse;
+    const lb = decoded?.id?.labtech;
+    const rf = decoded?.id?.refmanager;
+    const pt = decoded?.id?.patient;
+    const ad = decoded?.id?.admin;
+
+
+    if(dc)
+    {
+      const usid = dc.userId;
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const docid = dc.docid;
+      const doc = await Doctor.findByPk(docid);
+      if(!doc) return res.status(404).json({error:'Doctor not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+
+      user.photo = prof.buffer;
+      user.mime = prof.mimetype;
+
+      await user.save();
+
+      return res.status(202).json({success: true, message: 'Photo uploaded succesfully'});
+    
+
+    }
+    else if(sj)
+    {
+
+      const usid = sj.userId;
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const docid = sj.doctorId;
+      const doc = await Doctor.findByPk(docid);
+      if(!doc) return res.status(404).json({error:'Doctor not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+      const lic = sj.lic_no;
+      const cs = await Surgeon.findOne({where: {license_number: lic}});
+      if(!cs) return res.status(404).json({Error:'Surgeon not submitted details yet'});
+
+      user.photo = prof.buffer;
+      user.mime = prof.mimetype;
+
+      await user.save();
+
+      return res.status(202).json({success: true, message: 'Photo uploaded succesfully'});
+    
+
+
+    }
+
+    else if(ns){
+      const usid = ns.id;
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const nt0 = ns.license_number;
+      const nsa = await Nurse.findByPk({where:{license_number:nt0}});
+      if(!nsa) return res.status(404).json({error:'Surgeon not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+
+      user.photo = prof.buffer;
+      user.mime = prof.mimetype;
+
+      await user.save();
+
+      return res.status(202).json({success: true, message: 'Photo uploaded succesfully'});
+    
+
+    }
+    else if(lb)
+    {
+      const usid = lb.userId;
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const docid = lb.labtId;
+      const doc = await Labtech.findByPk(docid);
+      if(!doc) return res.status(404).json({error:'Labtech not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+
+      user.photo = prof.buffer;
+      user.mime = prof.mimetype;
+
+      await user.save();
+
+      return res.status(202).json({success: true, message: 'Photo uploaded succesfully'});
+    
+
+    }
+
+    else if (rf)
+    {
+      const usid = rf.id;
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+
+      user.photo = prof.buffer;
+      user.mime = prof.mimetype;
+
+      await user.save();
+
+      return res.status(202).json({success: true, message: 'Photo uploaded succesfully'});
+    
+
+    }
+
+    else if(pt)
+    {
+      const usid = pt.userId;
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const docid = pt.id;
+      const doc = await Patient.findByPk(docid);
+      if(!doc) return res.status(404).json({error:'Patient not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+
+      user.photo = prof.buffer;
+      user.mime = prof.mimetype;
+
+      await user.save();
+
+      return res.status(202).json({success: true, message: 'Photo uploaded succesfully'});
+    
+
+
+    }
+
+    else if(ad){
+
+    const usid = ad.id;
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+
+      user.photo = prof.buffer;
+      user.mime = prof.mimetype;
+
+      await user.save();
+
+      return res.status(202).json({success: true, message: 'Photo uploaded succesfully'});
+    
+
+
+    }
+
+    else{
+      return res.status(403).json({error:'An errror occured and yes you are responsible..not us'});
+    }
+
+
+  }
+  catch(e)
+  {
+    console.log(e.message);
+    return res.status(501).json({error:'Could not upload profile photo'});
+  }
+}
+
+
+
+export const i0x567 = async (req,res)=>{
+
+  try{
+    const pl = req.params;
+    if(isNaN(id)) return res.status(422).json({error:`Id must be of type int and not ${id}`});
+    const ah = req.headers['authorization'];
+    if(!ah) return res.status(401).json({error:'Missing auth header'});
+    if(!ah.startsWith('Bearer ')) return res.status(422).json({error: 'Invalid token format'});
+    const token = ah.split(' ')[1];
+    const decoded = vertok(token);
+    if(!decoded) return res.status(403).json({error:'Invalid or expired token..sire'});
+
+    const dc = decoded?.id?.doctor;
+    const sj = decoded?.id.surgeon;
+    const ns = decoded?.id?.nurse;
+    const lb = decoded?.id?.labtech;
+    const rf = decoded?.id?.refmanager;
+    const pt = decoded?.id?.patient;
+    const ad = decoded?.id?.admin;
+
+    if(dc)
+    {
+      const usid = dc.userId;
+      if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const docid = dc.docid;
+      const doc = await Doctor.findByPk(docid);
+      if(!doc) return res.status(404).json({error:'Doctor not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+      if(!user.photo) return res.status(404).json({error:`${user.user_role} ${user.fname} ${user.lname} has not uploaded a photo yet`});
+      const df = "<img src={user.photo}>";
+      const p2 = user.photo.toString('base64');
+      const p0 = `data:${user.mime};base64,${p2}`;
+      return res.status(200).json({
+        display_frontend: df,
+        user:{
+          id: usid,
+          photo:p0
+        }
+      });
+
+    }
+
+    else if(sj)
+{
+  const usid = sj.userId;
+  if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
+
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const docid = sj.doctorId;
+      const doc = await Doctor.findByPk(docid);
+      if(!doc) return res.status(404).json({error:'Doctor not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+      const lic = sj.lic_no;
+      const cs = await Surgeon.findOne({where: {license_number: lic}});
+      if(!cs) return res.status(404).json({Error:'Surgeon not submitted details yet'});
+      if(!user.photo) return res.status(404).json({error:`${user.user_role} ${user.fname} ${user.lname} has not uploaded a photo yet`});
+      const df = "<img src={user.photo}>";
+
+      const p2 = user.photo.toString('base64');
+      const p0 = `data:${user.mime};base64,${p2}`;
+      return res.status(200).json({
+        display_frontend: df,
+        user:{
+          id: usid,
+          photo:p0
+        }
+      });
+
+}
+else if(ns)
+{
+  const usid = ns.id;
+  if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
+
+  const user = await User.findByPk(usid);
+  if(!user) return res.status(404).json({error:'User not found'});
+  const nt0 = ns.license_number;
+  const nsa = await Nurse.findByPk({where:{license_number:nt0}});
+  if(!nsa) return res.status(404).json({error:'Surgeon not yet registered on afyalink'});
+  if(!user.is_verified) return res.status({error:'User is not verified'});
+  if(!user.photo) return res.status(404).json({error:`${user.user_role} ${user.fname} ${user.lname} has not uploaded a photo yet`});
+  const df = "<img src={user.photo}>";
+  const p2 = user.photo.toString('base64');
+  const p0 = `data:${user.mime};base64,${p2}`;
+  return res.status(200).json({
+    display_frontend: df,
+    user:{
+      id: usid,
+      photo:p0
+    }
+  });
+
+   
+
+
+}
+else if(lb)
+{
+
+  const usid = lb.userId;
+  if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
+
+      const user = await User.findByPk(usid);
+      if(!user) return res.status(404).json({error:'User not found'});
+      const docid = lb.labtId;
+      const doc = await Labtech.findByPk(docid);
+      if(!doc) return res.status(404).json({error:'Labtech not yet registered on afyalink'});
+      if(!user.is_verified) return res.status({error:'User is not verified'});
+      if(!user.photo) return res.status(404).json({error:`${user.user_role} ${user.fname} ${user.lname} has not uploaded a photo yet`});
+      const df = "<img src={user.photo}>";
+      const p2 = user.photo.toString('base64');
+      const p0 = `data:${user.mime};base64,${p2}`;
+      return res.status(200).json({
+        display_frontend: df,
+        user:{
+          id: usid,
+          photo:p0
+        }
+      });
+
+
+
+}
+else if (rf)
+{
+
+  const usid = rf.id;
+  if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
+
+  const user = await User.findByPk(usid);
+  if(!user) return res.status(404).json({error:'User not found'});
+  if(!user.is_verified) return res.status({error:'User is not verified'});
+  if(!user.photo) return res.status(404).json({error:`${user.user_role} ${user.fname} ${user.lname} has not uploaded a photo yet`});
+  const df = "<img src={user.photo}>";
+  const p2 = user.photo.toString('base64');
+  const p0 = `data:${user.mime};base64,${p2}`;
+  return res.status(200).json({
+    display_frontend: df,
+    user:{
+      id: usid,
+      photo:p0
+    }
+  });
+
+
+}
+
+else if(pt)
+{
+  const usid = pt.userId;
+  if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
+
+  const user = await User.findByPk(usid);
+  if(!user) return res.status(404).json({error:'User not found'});
+  const docid = pt.id;
+  const doc = await Patient.findByPk(docid);
+  if(!doc) return res.status(404).json({error:'Patient not yet registered on afyalink'});
+  if(!user.is_verified) return res.status({error:'User is not verified'});
+  if(!user.photo) return res.status(404).json({error:`${user.user_role} ${user.fname} ${user.lname} has not uploaded a photo yet`});
+  const df = "<img src={user.photo}>";
+  const p2 = user.photo.toString('base64');
+  const p0 = `data:${user.mime};base64,${p2}`;
+  return res.status(200).json({
+    display_frontend: df,
+    user:{
+      id: usid,
+      photo:p0
+    }
+  });
+
+
+
+}
+else if(ad)
+{
+  const usid = ad.id;
+  if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
+
+  const user = await User.findByPk(usid);
+  if(!user) return res.status(404).json({error:'User not found'});
+  if(!user.is_verified) return res.status({error:'User is not verified'});
+  if(!user.photo) return res.status(404).json({error:`${user.user_role} ${user.fname} ${user.lname} has not uploaded a photo yet`});
+  const df = "<img src={user.photo}>";
+  const p2 = user.photo.toString('base64');
+  const p0 = `data:${user.mime};base64,${p2}`;
+  return res.status(200).json({
+    display_frontend: df,
+    user:{
+      id: usid,
+      photo:p0
+    }
+  });
+
+
+
+
+}
+
+else{
+  //kuma ww
+  return res.status(422).json({error:'Nothing can e done to fetch the phot at the moment.. sorry'});
+}
+
+
+
+
+  }
+
+  catch(frumbanya)
+  {
+    console.log(frumbanya.message);
+    return res.status(501).json({error:'Could not fetch user photo'});
+
+  }
+
+
+
+}
+
   
 
 

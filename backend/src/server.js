@@ -54,7 +54,7 @@ app.use(autoban);
 //app.use(blockip);
 //app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
-
+app.use(express.static('static'));
 /*
 
 //server mantainance
@@ -147,6 +147,8 @@ app.all('/api/v1', (req,res)=>{
      users:[ 'POST  /api/users/sigunp',
       'POST /api/users/signin',
       'GET /api/users/3',
+      'POST /api/users/upload/photo',
+      'GET /api/users/3/view/photo',
       'POST /api/users/forgotpass',
       'PUT /api/users/resetpass',
       'POST /api/users/verify/email',
