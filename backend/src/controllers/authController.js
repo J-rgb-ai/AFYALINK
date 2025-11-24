@@ -539,53 +539,56 @@ if(!checkm) return res.status(401).json({error: 'Please enter a valid email '});
 
 const user = await User.findOne({where: email ? { email } : { phone }});
 const t0x56 = new Date().getTime();
-const dt0x56 = user.dis_un;
-const d0x56 = t0x56 - dt0x56;
+//console.log(t0x56 + ' now');
+const dt0x56 = user.dis_un
+const d0x56 = dt0x56 - t0x56;
 const m0x56 = Math.floor(d0x56/(1000*60));
+//console.log(m0x56);
 
 
 if(!user) return res.status(404).json({error: 'User with those details not found'});
 
-if(m0x56 > 15)
+
+
+const passhash = user.password_hash;
+
+const verify_user = await bcrypt.compare(password,passhash);
+if(!verify_user) {
+  await user.increment('wrong');
+  if(user.wrong > 5 && !user.disabled){
+    const nt4  = new Date().getTime() + (15*1000*60);
+    //console.log(`${nt4} nt4`);
+    user.dis_un = nt4
+   // console.log(user.dis_un);
+    user.disabled = true;
+    await user.save();
+    await user.increment('no_dis');
+    return res.status(403).json({error:`Account disabled due to many incorrect attempts.. for ${m0x56}`});
+  }
+  const nt46  = new Date().getTime() + (15*1000*60);
+  user.dis_un = nt46;
+  await user.save();
+  if(user.disabled) return res.status(403).json({error:`Account was temporarily disabled due to many incorrect login attempts.. please wait for ${m0x56} minutes`});
+
+
+
+  return res.status(401).json({error:`Invalid details very wrong indeed`});
+}
+
+
+//acha niende zido will be back on your aah 
+if(m0x56 <= 0) 
 {
   user.wrong = 0;
+  user.dis_un = null;
   user.disabled = false;
   await user.save();
 }
 
 
+
 if(user.disabled) return res.status(403).json({error:`Account was disabled please wait for ${m0x56} minutes`});
 
-const passhash = user.password_hash;
-
-const verify_user = await bcrypt.compare(password,passhash);
-
-
-
-if(user.wrong > 5){
-  const t0x4 = new Date().getTime() + (15*60*1000);
-  user.dis_res = 'Too many incorrect login attempts';
-  user.dis_un = t0x4;
-  user.disabled = true;
-  const l0x566 = user.no_dis;
-  user.no_dis = l0x566 + 1;
-  await user.save();
-
-  return res.status(403).json({error: `Too many login attempts please try again after ${Math.floor(t0x56/(1000*60*60))} minutes..`})
-
-
-}
-
-
-
-if(!verify_user) {
-  
-   const i0x45 = user.wrong;
-   user.wrong = i0x45 + 1;
-   await user.save();
-
-  return res.status(401).json({error: 'Invalid details..'})
-}
 
 if(verify_user) {
   user.wrong = 0;

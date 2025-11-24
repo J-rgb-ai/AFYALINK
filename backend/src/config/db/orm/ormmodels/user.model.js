@@ -86,7 +86,7 @@ const User = sequelize.define('User', {
     defaultValue: 0
   },
   dis_un:{
-    type: DataTypes,DATE,
+    type: DataTypes.BIGINT,
     
   },
   created_at: {
