@@ -539,11 +539,9 @@ if(!checkm) return res.status(401).json({error: 'Please enter a valid email '});
 
 const user = await User.findOne({where: email ? { email } : { phone }});
 const t0x56 = new Date().getTime();
-//console.log(t0x56 + ' now');
 const dt0x56 = user.dis_un
 const d0x56 = dt0x56 - t0x56;
 const m0x56 = Math.floor(d0x56/(1000*60));
-//console.log(m0x56);
 
 
 if(!user) return res.status(404).json({error: 'User with those details not found'});
@@ -557,21 +555,17 @@ if(!verify_user) {
   await user.increment('wrong');
   if(user.wrong > 5 && !user.disabled){
     const nt4  = new Date().getTime() + (15*1000*60);
-    //console.log(`${nt4} nt4`);
     user.dis_un = nt4
-   // console.log(user.dis_un);
     user.disabled = true;
+    user.dis_res = `Too many incorrect login attempts at ${new Date()}`;
     await user.save();
     await user.increment('no_dis');
-    return res.status(403).json({error:`Account disabled due to many incorrect attempts.. for ${m0x56}`});
+    return res.status(403).json({error:`Account disabled due to many incorrect attempts..`});
   }
-  const nt46  = new Date().getTime() + (15*1000*60);
+  const nt46  = new Date().getTime() + (16*1000*60);
   user.dis_un = nt46;
   await user.save();
   if(user.disabled) return res.status(403).json({error:`Account was temporarily disabled due to many incorrect login attempts.. please wait for ${m0x56} minutes`});
-
-
-
   return res.status(401).json({error:`Invalid details very wrong indeed`});
 }
 
@@ -587,7 +581,7 @@ if(m0x56 <= 0)
 
 
 
-if(user.disabled) return res.status(403).json({error:`Account was disabled please wait for ${m0x56} minutes`});
+if(user.disabled) return res.status(403).json({error:`Account was disabled please wait for ${m0x56} minutes due to  reason: ${user.dis_res}`});
 
 
 if(verify_user) {
@@ -1415,7 +1409,7 @@ export const prous = async(req,res) =>{
   try{
     if(!req.file) return res.status(422).json({error: 'Please select a photo file'});
     const prof = req.file;
-    const ah = req.headers['authprization'];
+    const ah = req.headers['authorization'];
     if(!ah) return res.status(401).json({error:'Missing auth token'});
     if(!ah.startsWith('Bearer ')) return res.status(422).json({error:'Invalid token format'});
     const token = ah.split(' ')[1];
@@ -1586,13 +1580,15 @@ export const prous = async(req,res) =>{
 export const i0x567 = async (req,res)=>{
 
   try{
-    const pl = req.params;
-    if(isNaN(id)) return res.status(422).json({error:`Id must be of type int and not ${id}`});
+    const pl = req.params.pl;
+    if(isNaN(parseInt(pl))) return res.status(422).json({error:`Id must be of type int and not ${pl}`});
     const ah = req.headers['authorization'];
     if(!ah) return res.status(401).json({error:'Missing auth header'});
     if(!ah.startsWith('Bearer ')) return res.status(422).json({error: 'Invalid token format'});
+    if(!pl) return res.status(422).json({error: 'Missing user id..please visit api/v1 for manual kaa hujui kitu unafanya nkt..'});
     const token = ah.split(' ')[1];
     const decoded = vertok(token);
+    //console.log(decoded);
     if(!decoded) return res.status(403).json({error:'Invalid or expired token..sire'});
 
     const dc = decoded?.id?.doctor;
@@ -1600,6 +1596,7 @@ export const i0x567 = async (req,res)=>{
     const ns = decoded?.id?.nurse;
     const lb = decoded?.id?.labtech;
     const rf = decoded?.id?.refmanager;
+   // console.log(rf);
     const pt = decoded?.id?.patient;
     const ad = decoded?.id?.admin;
 
@@ -1713,6 +1710,7 @@ else if (rf)
 {
 
   const usid = rf.id;
+  //console.log(usid);
   if(parseInt(pl) !== parseInt(usid)) return res.status(401).json({error:`${pl} is not equal to ${usid}`});
 
   const user = await User.findByPk(usid);
