@@ -47,6 +47,10 @@ export default(sequelize)=>{
     mime:{
         type: DataTypes.STRING(50)
     },
+    intialized:{
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
     created_at:{
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW

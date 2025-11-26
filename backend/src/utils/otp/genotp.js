@@ -3,11 +3,16 @@ import redis from '../../config/redis/redis.js';
 
 const OTP_EXPIRY = 20000; // dak mbili
 
+
+
+
 const genotp = async (userId) => {
   
   const otp = crypto.randomInt(100000, 999999).toString();
   const key = `otp:${userId}`;
   const checkot = await redis.get(key);
+  if(redis.dbsize() > 100) throw new Error('Please request otplater..saizi wasee most wame request');
+  
   if(!checkot){
 
   await redis.set(key, otp, 'EX', OTP_EXPIRY,'NX');

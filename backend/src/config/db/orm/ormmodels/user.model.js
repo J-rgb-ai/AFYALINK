@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, DATE } from 'sequelize';
 import models from '../sequalize.js';
 import {sequelize} from '../sequalize.js';
 //import Facility from './facility.js'; // circular import loading... i hate my life
@@ -81,6 +81,14 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(500),
     defaultValue: 'Did something bad and account was dissabled'
   },
+  wrong:{
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  dis_un:{
+    type: DataTypes.BIGINT,
+    
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
@@ -97,7 +105,7 @@ const User = sequelize.define('User', {
 });
 
 User.associate = (models) =>{
-  User.belongsTo(models.User,{foreignKey:'facility_id', as: 'user_fac'});
+  User.belongsTo(models.Facility,{foreignKey:'facility_id', as: 'user_fac'});
   User.hasOne(models.Doctor,{foreignKey:'user_id',as:'doctor'});
   User.hasOne(models.Surgeon,{foreignKey: 'user_id', as: 'surgeon'});
   User.hasOne(models.Nurse,{foreignKey:'user_id', as: 'nurse'});
